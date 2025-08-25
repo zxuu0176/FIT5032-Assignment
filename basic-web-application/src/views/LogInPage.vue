@@ -91,5 +91,7 @@ const validatePassword = (blur) => {
 </script>
 
 <style scoped>
-
+.login-page {
+  width: 100%;
+}
 </style>
