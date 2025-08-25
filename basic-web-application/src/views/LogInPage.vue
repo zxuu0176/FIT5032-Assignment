@@ -1,92 +1,95 @@
 <template>
   <div class="login-page">
-    <h1>Log In</h1>
-    <form @submit.prevent="handleLogin">
-      <div class="form-group">
-        <label for="email">Email:</label>
-        <input
-          id="email"
-          v-model="email"
-          type="email"
-          required
-          autocomplete="username"
-        />
+    <div class="container mt-5">
+      <div class="row">
+        <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2">
+          <h1 class="text-center">User Information Form</h1>
+          <form @submit.prevent="submitForm">
+            <div class="row mb-3">
+              <div class="col-6">
+                <label for="username" class="form-label">Username</label>
+                <input type="text" class="form-control" id="username"
+                  @blur="() => validateName(true)"
+                  @input="() => validateName(false)"
+                  v-model="formData.username" />
+                  <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
+              </div>
+              <div class="col-6">
+                <label for="password" class="form-label">Password</label>
+                <input type="password" class="form-control" id="password"
+                  @blur="() => validatePassword(true)"
+                  @input="() => validatePassword(false)"
+                  v-model="formData.password" />
+                  <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
+              </div>
+            </div>
+            <div class="text-center">
+              <button type="submit" class="btn btn-primary me-2">Submit</button>
+              <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
+            </div>
+          </form>
+        </div>
       </div>
-      <div class="form-group">
-        <label for="password">Password:</label>
-        <input
-          id="password"
-          v-model="password"
-          type="password"
-          required
-          autocomplete="current-password"
-        />
-      </div>
-      <button type="submit">Log In</button>
-      <p v-if="error" class="error">{{ error }}</p>
-    </form>
+    </div>
   </div>
 </template>
 
-<script>
-export default {
-  name: "LogInPage",
-  data() {
-    return {
-      email: "",
-      password: "",
-      error: "",
+<script setup>
+import { ref } from 'vue';
+const formData = ref({
+    username: '',
+    password: ''
+});
+
+const submitForm = () => {
+  validateName(true);
+  validatePassword(true);
+};
+
+const clearForm = () => {
+    formData.value = {
+      username: '',
+      password: ''
     };
-  },
-  methods: {
-    handleLogin() {
-      // Replace with real authentication logic
-      if (this.email === "user@example.com" && this.password === "password") {
-        this.error = "";
-        // Redirect or emit event on successful login
-        this.$router.push({ name: "Home" });
-      } else {
-        this.error = "Invalid email or password.";
-      }
-    },
-  },
+};
+
+const errors = ref({
+    username: null,
+    password: null
+});
+
+const validateName = (blur) => {
+  if (formData.value.username.length < 3) {
+    if (blur) errors.value.username = "Name must be at least 3 characters";
+  } else {
+    errors.value.username = null;
+  }
+};
+
+const validatePassword = (blur) => {
+  const password = formData. value.password;
+  const minLength = 8;
+  const hasUppercase = /[A-Z]/.test(password);
+  const hasLowercase = /[a-z]/.test(password);
+  const hasNumber = /\d/.test(password);
+  const hasSpecialChar = /[!@#$%^&*(), .? ":{}|<>]/.test(password);
+
+  if (password.length < minLength) {
+    if (blur) errors. value.password = `Password must be at least ${minLength} characters long .`;
+  } else if (!hasUppercase) {
+    if (blur) errors. value.password = "Password must contain at least one uppercase letter.";
+  } else if (!hasLowercase) {
+    if (blur) errors.value.password = "Password must contain at least one lowercase letter.";
+  } else if (!hasNumber) {
+    if (blur) errors.value.password = "Password must contain at least one number.";
+  } else if (!hasSpecialChar) {
+    if (blur) errors.value.password = "Password must contain at least one special character.";
+  } else {
+    errors.value. password = null;
+  }
 };
 </script>
 
 <style scoped>
-.login-page {
-  max-width: 400px;
-  margin: 40px auto;
-  padding: 2rem;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background: #fafafa;
-}
-.form-group {
-  margin-bottom: 1rem;
-}
-label {
-  display: block;
-  margin-bottom: 0.25rem;
-}
-input[type="email"],
-input[type="password"] {
-  width: 100%;
-  padding: 0.5rem;
-  box-sizing: border-box;
-}
-button {
-  width: 100%;
-  padding: 0.75rem;
-  background: #1976d2;
-  color: #fff;
-  border: none;
-  border-radius: 4px;
-  font-size: 1rem;
-}
-.error {
-  color: #d32f2f;
-  margin-top: 1rem;
-  text-align: center;
-}
+
 </style>
