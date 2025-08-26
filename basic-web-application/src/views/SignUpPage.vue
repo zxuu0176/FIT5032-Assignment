@@ -1,9 +1,9 @@
 <template>
-  <div class="login-page">
+  <div class="signup-page">
     <div class="container mt-5">
       <div class="row">
         <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2">
-          <h1 class="text-center">User Information Form</h1>
+          <h1 class="text-center">Sign Up Form</h1>
           <form @submit.prevent="submitForm">
             <div class="row mb-3">
               <div class="col-6">
@@ -28,7 +28,16 @@
               <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
             </div>
           </form>
-          <router-link to="/signup">New member? Sign up</router-link>
+
+          <div v-if="savedUsers.length > 0" class="mt-4">
+            <h5>Saved Users:</h5>
+            <ul class="list-group">
+              <li v-for="user in savedUsers" :key="user.id" class="list-group-item d-flex justify-content-between align-items-center">
+                {{ user.username }}
+                <small class="text-muted">{{ formatDate(user.timestamp) }}</small>
+              </li>
+            </ul>
+          </div>
         </div>
       </div>
     </div>
@@ -36,7 +45,7 @@
 </template>
 
 <script setup>
-import { ref } from 'vue';
+import { ref, onMounted } from 'vue';
 const formData = ref({
     username: '',
     password: ''
@@ -46,10 +55,9 @@ const submitForm = () => {
   validateName(true);
   validatePassword(true);
 
-  if (validateLogin()) {
-    alert('Login Successfully!')
-  } else {
-    alert('Invalid username or password')
+  if (!errors.value.username && !errors.value.password) {
+    saveToLocalStorage();
+    alert('User registered and saved successfully!');
   }
 };
 
@@ -57,6 +65,10 @@ const clearForm = () => {
     formData.value = {
       username: '',
       password: ''
+    };
+    errors.value = {
+      username: null,
+      password: null
     };
 };
 
@@ -74,7 +86,7 @@ const validateName = (blur) => {
 };
 
 const validatePassword = (blur) => {
-  const password = formData.value.password;
+  const password = formData. value.password;
   const minLength = 8;
   const hasUppercase = /[A-Z]/.test(password);
   const hasLowercase = /[a-z]/.test(password);
@@ -96,25 +108,91 @@ const validatePassword = (blur) => {
   }
 };
 
-const validateLogin = () => {
-  const username = formData.value.username;
-  const password = formData.value.password;
-  const existingUsers = JSON.parse(localStorage.getItem('usernames') || '[]');
+const savedUsers = ref([]);
 
-  if (existingUsers.some(user => (user.username === username && user.password === password))) {
-    return true;
+onMounted(() => {
+  loadSavedUsers();
+});
+
+const saveToLocalStorage = () => {
+  try {
+    const existingUsers = JSON.parse(localStorage.getItem('usernames') || '[]');
+
+    // Check if username already exists
+    if (existingUsers.some(user => user.username === formData.value.username)) {
+      alert('Username already exists!');
+      return;
+    }
+
+    const newUser = {
+      id: Date.now(), // Simple ID generation
+      username: formData.value.username,
+      // Note: In production, never store plain text passwords!
+      // This is for demonstration only
+      password: formData.value.password,
+      timestamp: new Date().toISOString()
+    };
+
+    existingUsers.push(newUser);
+    localStorage.setItem('usernames', JSON.stringify(existingUsers));
+
+    // Refresh the saved users list
+    loadSavedUsers();
+
+    // Clear the form
+    clearForm();
+  } catch (error) {
+    console.error('Error saving to localStorage:', error);
+    alert('Error saving user data');
   }
+};
 
-  return false;
+// Load saved users from localStorage
+const loadSavedUsers = () => {
+  try {
+    const users = JSON.parse(localStorage.getItem('usernames') || '[]');
+    savedUsers.value = users;
+  } catch (error) {
+    console.error('Error loading from localStorage:', error);
+    savedUsers.value = [];
+  }
+};
+
+// const loadFromStorage = () => {
+//   try {
+//     const users = JSON.parse(localStorage.getItem('usernames') || '[]');
+//     if (users.length > 0) {
+//       const lastUser = users[users.length - 1];
+//       formData.value.username = lastUser.username;
+//       formData.value.password = lastUser.password;
+//     } else {
+//       alert('No saved users found');
+//     }
+//   } catch (error) {
+//     console.error('Error loading from localStorage:', error);
+//     alert('Error loading user data');
+//   }
+// };
+
+// const clearStorage = () => {
+//   if (confirm('Are you sure you want to clear all saved users?')) {
+//     localStorage.removeItem('usernames');
+//     savedUsers.value = [];
+//     alert('Storage cleared successfully');
+//   }
+// };
+
+const formatDate = (timestamp) => {
+  return new Date(timestamp).toLocaleString();
 };
 </script>
 
 <style scoped>
-.login-page {
+.signup-page {
   width: 100%;
 }
 
-.login-page .col-12 {
+.signup-page .col-12 {
   border: 2px solid #dee2e6;
   border-radius: 8px;
   padding: 30px;
