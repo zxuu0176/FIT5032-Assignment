@@ -1,7 +1,7 @@
 <template>
   <nav class="navbar navbar-expand-lg fixed-top bg-light shadow-sm">
     <div class="container-fluid">
-      <a class="navbar-brand fw-bold text-primary" href="/">Navbar</a>
+      <a class="navbar-brand fw-bold text-primary" href="/">Inter Throw Organization</a>
 
       <button
         class="navbar-toggler"
