@@ -1,85 +1,78 @@
 <template>
-  <nav class="navbar">
-    <div class="brand">Brand</div>
-    <div class="nav-links">
-      <router-link to="/" class="nav-link">Home</router-link>
-      <router-link to="/about" class="nav-link">About</router-link>
-      <router-link to="/login" class="nav-link">Log In</router-link>
+  <nav class="navbar navbar-expand-lg fixed-top bg-light shadow-sm">
+    <div class="container-fluid">
+      <a class="navbar-brand fw-bold text-primary" href="/">Navbar</a>
+
+      <button
+        class="navbar-toggler"
+        type="button"
+        @click="isNavbarOpen = !isNavbarOpen"
+        :aria-expanded="isNavbarOpen"
+        aria-label="Toggle navigation"
+      >
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse justify-content-end" :class="{ show: isNavbarOpen }">
+        <ul class="navbar-nav">
+          <li v-for="item in navItems" :key="item.path" class="nav-item">
+            <router-link
+              :to="item.path"
+              class="nav-link px-3 py-2 rounded-2 text-secondary fw-medium transition-all"
+              active-class="bg-primary text-white"
+              @click="isNavbarOpen = false"
+            >
+              {{ item.name }}
+            </router-link>
+          </li>
+        </ul>
+
+        <form class="d-flex ms-3" role="search" @submit.prevent="handleSearch">
+          <input
+            v-model="searchQuery"
+            class="form-control me-2 border-2 border-light-subtle rounded-3"
+            type="search"
+            placeholder="Search"
+            aria-label="Search"
+          />
+          <button class="btn btn-outline-success rounded-3 px-3" type="submit">
+            Search
+          </button>
+        </form>
+      </div>
     </div>
   </nav>
 </template>
 
 <script setup>
+import { ref } from 'vue'
 
+const isNavbarOpen = ref(false)
+const searchQuery = ref('')
+
+const navItems = [
+  { name: 'Home', path: '/' },
+  { name: 'About', path: '/about' },
+  { name: 'Resource', path: '/resource' },
+  { name: 'Membership', path: '/member' },
+  { name: 'Contact', path: '/contact' },
+  { name: 'Log In', path: '/login' }
+]
+
+const handleSearch = () => {
+  if (searchQuery.value.trim()) {
+    console.log('Search:', searchQuery.value)
+  }
+}
 </script>
 
 <style scoped>
-.navbar {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  width: 100%;
-  padding: 1rem 2rem;
-  background-color: #ffffff;
-  border-bottom: 1px solid #e1e4e8;
-  box-shadow: 0 2px 10px rgba(0,0,0,0.08);
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  z-index: 1000;
-}
-
-.brand {
-  font-size: 1.5rem;
-  font-weight: 700;
-  color: #2c3e50;
-}
-
-.nav-links {
-  display: flex;
-  gap: 1.5rem;
-  list-style: none;
-  margin: 0;
-  padding: 0;
-}
-
-.nav-link {
-  text-decoration: none;
-  color: #5a677d;
-  font-weight: 500;
-  padding: 0.5rem 1rem;
-  border-radius: 6px;
+.transition-all {
   transition: all 0.3s ease;
-  font-size: 1rem;
 }
 
-.nav-link:hover {
-  background-color: #f0f3f9;
-  color: #2c3e50;
-}
-
-.nav-link.router-link-active {
-  background-color: #3498db;
-  color: white;
-}
-
-@media (max-width: 768px) {
-  .navbar {
-    padding: 1rem;
-    flex-direction: column;
-    gap: 1rem;
-  }
-
-  .nav-links {
-    flex-direction: column;
-    gap: 0.8rem;
-    width: 100%;
-  }
-
-  .nav-link {
-    width: 100%;
-    text-align: center;
-  }
+.nav-link:hover:not(.bg-primary) {
+  background-color: var(--bs-light) !important;
+  color: var(--bs-dark) !important;
 }
 </style>
