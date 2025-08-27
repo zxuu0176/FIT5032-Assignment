@@ -14,12 +14,6 @@ import NavBar from './components/NavBar.vue';
 </script>
 
 <style scoped>
-html, body, #app {
-  width: 100%;
-  margin: 0;
-  padding: 0;
-}
-
 .app-container {
   min-height: 100vh;
   display: flex;
@@ -39,12 +33,5 @@ html, body, #app {
   justify-content: center;
   align-items: flex-start;
   padding: 2rem 0;
-}
-
-@media (max-width: 768px) {
-  .main-content {
-    margin-top: 130px;
-    padding: 1rem;
-  }
 }
 </style>

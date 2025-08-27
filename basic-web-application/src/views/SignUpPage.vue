@@ -118,17 +118,14 @@ const saveToLocalStorage = () => {
   try {
     const existingUsers = JSON.parse(localStorage.getItem('usernames') || '[]');
 
-    // Check if username already exists
     if (existingUsers.some(user => user.username === formData.value.username)) {
       alert('Username already exists!');
       return;
     }
 
     const newUser = {
-      id: Date.now(), // Simple ID generation
+      id: Date.now(),
       username: formData.value.username,
-      // Note: In production, never store plain text passwords!
-      // This is for demonstration only
       password: formData.value.password,
       timestamp: new Date().toISOString()
     };
@@ -136,10 +133,8 @@ const saveToLocalStorage = () => {
     existingUsers.push(newUser);
     localStorage.setItem('usernames', JSON.stringify(existingUsers));
 
-    // Refresh the saved users list
     loadSavedUsers();
 
-    // Clear the form
     clearForm();
   } catch (error) {
     console.error('Error saving to localStorage:', error);
@@ -147,7 +142,6 @@ const saveToLocalStorage = () => {
   }
 };
 
-// Load saved users from localStorage
 const loadSavedUsers = () => {
   try {
     const users = JSON.parse(localStorage.getItem('usernames') || '[]');

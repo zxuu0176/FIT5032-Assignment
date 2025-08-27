@@ -27,7 +27,7 @@
           </li>
         </ul>
 
-        <form class="d-flex ms-3" role="search" @submit.prevent="handleSearch">
+        <!-- <form class="d-flex ms-3" role="search" @submit.prevent="handleSearch">
           <input
             v-model="searchQuery"
             class="form-control me-2 border-2 border-light-subtle rounded-3"
@@ -38,7 +38,7 @@
           <button class="btn btn-outline-success rounded-3 px-3" type="submit">
             Search
           </button>
-        </form>
+        </form> -->
       </div>
     </div>
   </nav>
@@ -48,7 +48,7 @@
 import { ref } from 'vue'
 
 const isNavbarOpen = ref(false)
-const searchQuery = ref('')
+// const searchQuery = ref('')
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -56,14 +56,15 @@ const navItems = [
   { name: 'Resource', path: '/resource' },
   { name: 'Membership', path: '/member' },
   { name: 'Contact', path: '/contact' },
-  { name: 'Log In', path: '/login' }
+  { name: 'Log In', path: '/login' },
+  { name: 'Sign Up', path: '/signup'}
 ]
 
-const handleSearch = () => {
-  if (searchQuery.value.trim()) {
-    console.log('Search:', searchQuery.value)
-  }
-}
+// const handleSearch = () => {
+//   if (searchQuery.value.trim()) {
+//     console.log('Search:', searchQuery.value)
+//   }
+// }
 </script>
 
 <style scoped>
