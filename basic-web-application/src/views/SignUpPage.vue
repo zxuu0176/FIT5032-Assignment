@@ -25,7 +25,8 @@
             </div>
             <div class="text-center">
               <button type="submit" class="btn btn-primary me-2">Submit</button>
-              <button type="button" class="btn btn-secondary" @click="clearForm">Clear</button>
+              <button type="button" class="btn btn-secondary me-2" @click="clearForm">Clear</button>
+              <button type="button" class="btn btn-secondary" @click="clearStorage">Clear Storage</button>
             </div>
           </form>
 
@@ -57,7 +58,6 @@ const submitForm = () => {
 
   if (!errors.value.username && !errors.value.password) {
     saveToLocalStorage();
-    alert('User registered and saved successfully!');
   }
 };
 
@@ -136,6 +136,7 @@ const saveToLocalStorage = () => {
     loadSavedUsers();
 
     clearForm();
+    alert('User registered and saved successfully!');
   } catch (error) {
     console.error('Error saving to localStorage:', error);
     alert('Error saving user data');
@@ -168,13 +169,13 @@ const loadSavedUsers = () => {
 //   }
 // };
 
-// const clearStorage = () => {
-//   if (confirm('Are you sure you want to clear all saved users?')) {
-//     localStorage.removeItem('usernames');
-//     savedUsers.value = [];
-//     alert('Storage cleared successfully');
-//   }
-// };
+const clearStorage = () => {
+  if (confirm('Are you sure you want to clear all saved users?')) {
+    localStorage.removeItem('usernames');
+    savedUsers.value = [];
+    alert('Storage cleared successfully');
+  }
+};
 
 const formatDate = (timestamp) => {
   return new Date(timestamp).toLocaleString();
