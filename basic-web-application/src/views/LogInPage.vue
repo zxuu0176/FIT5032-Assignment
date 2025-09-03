@@ -4,15 +4,16 @@
       <div class="row">
         <div class="col-12 col-sm-10 offset-sm-1 col-md-8 offset-md-2">
           <h1 class="text-center">User Information Form</h1>
+          <div v-if="errors.message" class="text-danger">{{ errors.message }}</div>
           <form @submit.prevent="submitForm">
             <div class="row mb-3">
               <div class="col-6">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" placeholder="Enter your username"
-                  @blur="() => validateName(true)"
-                  @input="() => validateName(false)"
-                  v-model="formData.username" />
-                  <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
+                <label for="email" class="form-label">Email Address</label>
+                <input type="text" class="form-control" id="email" placeholder="Enter your email address"
+                  @blur="() => validateEmail(true)"
+                  @input="() => validateEmail(false)"
+                  v-model="formData.email" />
+                  <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
               </div>
               <div class="col-6">
                 <label for="password" class="form-label">Password</label>
@@ -37,39 +38,77 @@
 
 <script setup>
 import { ref } from 'vue';
+import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const auth = getAuth();
+
 const formData = ref({
-    username: '',
+    email: '',
     password: ''
 });
 
 const submitForm = () => {
-  validateName(true);
+  validateEmail(true);
   validatePassword(true);
 
-  if (validateLogin()) {
-    alert('Login Successfully!')
-  } else {
-    alert('Invalid username or password')
+  if (!errors.value.email && !errors.value.password) {
+    login();
   }
+};
+
+const login = () => {
+  signInWithEmailAndPassword(auth, formData.value.email, formData.value.password)
+  .then((userCredential) => {
+    const user = userCredential.user;
+    alert("Login Successful! Welcome " + (user.displayName || user.email));
+    router.push("/");
+  }).catch((error) => {
+      if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") {
+        errors.value.message = "No account found with this email.";
+      } else if (error.code === "auth/wrong-password") {
+        errors.value.message = "Incorrect password.";
+      } else if (error.code === "auth/missing-email" || error.code === "auth/invalid-email") {
+        errors.value.message = "Invalid email format.";
+      } else {
+        errors.value.message = "Login failed: " + error.message;
+      }
+      console.log(error.code);
+      clearWrongForm();
+    })
 };
 
 const clearForm = () => {
     formData.value = {
-      username: '',
+      email: '',
+      password: ''
+    };
+    errors.value = {
+      email: null,
+      password: null,
+      message: null
+    };
+};
+
+const clearWrongForm = () => {
+    formData.value = {
+      email: '',
       password: ''
     };
 };
 
 const errors = ref({
-    username: null,
-    password: null
+    email: null,
+    password: null,
+    message: null
 });
 
-const validateName = (blur) => {
-  if (formData.value.username.length < 3) {
-    if (blur) errors.value.username = "Name must be at least 3 characters";
+const validateEmail = (blur) => {
+  if (formData.value.email.length < 3) {
+    if (blur) errors.value.email = "Email must be at least 3 characters";
   } else {
-    errors.value.username = null;
+    errors.value.email = null;
   }
 };
 
@@ -94,18 +133,6 @@ const validatePassword = (blur) => {
   } else {
     errors.value. password = null;
   }
-};
-
-const validateLogin = () => {
-  const username = formData.value.username;
-  const password = formData.value.password;
-  const existingUsers = JSON.parse(localStorage.getItem('usernames') || '[]');
-
-  if (existingUsers.some(user => (user.username === username && user.password === password))) {
-    return true;
-  }
-
-  return false;
 };
 </script>
 
