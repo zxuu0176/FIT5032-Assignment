@@ -7,12 +7,13 @@
           <form @submit.prevent="submitForm">
             <div class="row mb-3">
               <div class="col-6">
-                <label for="username" class="form-label">Username</label>
-                <input type="text" class="form-control" id="username" placeholder="Enter your username"
+                <label for="email" class="form-label">Email Address</label>
+                <input type="text" class="form-control" id="email" placeholder="Enter your email address"
                   @blur="() => validateName(true)"
                   @input="() => validateName(false)"
-                  v-model="formData.username" />
-                  <div v-if="errors.username" class="text-danger">{{ errors.username }}</div>
+                  v-model="formData.email" />
+                  <div v-if="errors.email" class="text-danger">{{ errors.email }}</div>
+                  <div v-if="errors.message" class="text-danger">{{ errors.message }}</div>
               </div>
               <div class="col-6">
                 <label for="password" class="form-label">Password</label>
@@ -26,16 +27,14 @@
             <div class="text-center">
               <button type="submit" class="btn btn-primary me-2">Submit</button>
               <button type="button" class="btn btn-secondary me-2" @click="clearForm">Clear</button>
-              <button type="button" class="btn btn-secondary" @click="clearStorage">Clear Storage</button>
             </div>
           </form>
 
-          <div v-if="savedUsers.length > 0" class="mt-4">
-            <h5>Saved Users:</h5>
+          <div v-if="!errors.email && !errors.password && !errors.message" class="mt-4">
+            <h5>Confirmed Sign Up:</h5>
             <ul class="list-group">
-              <li v-for="user in savedUsers" :key="user.id" class="list-group-item d-flex justify-content-between align-items-center">
-                {{ user.username }}
-                <small class="text-muted">{{ formatDate(user.timestamp) }}</small>
+              <li class="list-group-item d-flex justify-content-between align-items-center">
+                {{ savedUsers.email }}
               </li>
             </ul>
           </div>
@@ -46,9 +45,15 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref } from 'vue';
+import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
+import { useRouter } from 'vue-router';
+
+const router = useRouter();
+const auth = getAuth();
+
 const formData = ref({
-    username: '',
+    email: '',
     password: ''
 });
 
@@ -56,32 +61,51 @@ const submitForm = () => {
   validateName(true);
   validatePassword(true);
 
-  if (!errors.value.username && !errors.value.password) {
-    saveToLocalStorage();
+  if (!errors.value.email && !errors.value.password) {
+    signup();
+    savedUsers.value.email = formData.value.email;
+    savedUsers.value.password = formData.value.password;
   }
+};
+
+const signup = () => {
+  createUserWithEmailAndPassword(auth, formData.value.email, formData.value.password)
+  .then(() => {
+    alert("Firebase Register Successful!")
+    router.push('/login')
+  }).catch((error) => {
+      if (error.code === "auth/email-already-in-use") {
+        errors.value.message = "This email is already registered. Please log in instead.";
+      } else if (error.code === "auth/invalid-email") {
+        errors.value.message = "The email address is not valid.";
+      } else {
+        errors.value.message = "Signup failed: " + error.message;
+      }
+    })
 };
 
 const clearForm = () => {
     formData.value = {
-      username: '',
+      email: '',
       password: ''
     };
     errors.value = {
-      username: null,
+      email: null,
       password: null
     };
 };
 
 const errors = ref({
-    username: null,
-    password: null
+    email: null,
+    password: null,
+    message: null
 });
 
 const validateName = (blur) => {
-  if (formData.value.username.length < 3) {
-    if (blur) errors.value.username = "Name must be at least 3 characters";
+  if (formData.value.email.length < 3) {
+    if (blur) errors.value.email = "Name must be at least 3 characters";
   } else {
-    errors.value.username = null;
+    errors.value.email = null;
   }
 };
 
@@ -108,78 +132,65 @@ const validatePassword = (blur) => {
   }
 };
 
-const savedUsers = ref([]);
-
-onMounted(() => {
-  loadSavedUsers();
+const savedUsers = ref({
+    email: '',
+    password: ''
 });
 
-const saveToLocalStorage = () => {
-  try {
-    const existingUsers = JSON.parse(localStorage.getItem('usernames') || '[]');
+// onMounted(() => {
+//   loadSavedUsers();
+// });
 
-    if (existingUsers.some(user => user.username === formData.value.username)) {
-      alert('Username already exists!');
-      return;
-    }
-
-    const newUser = {
-      id: Date.now(),
-      username: formData.value.username,
-      password: formData.value.password,
-      timestamp: new Date().toISOString()
-    };
-
-    existingUsers.push(newUser);
-    localStorage.setItem('usernames', JSON.stringify(existingUsers));
-
-    loadSavedUsers();
-
-    clearForm();
-    alert('User registered and saved successfully!');
-  } catch (error) {
-    console.error('Error saving to localStorage:', error);
-    alert('Error saving user data');
-  }
-};
-
-const loadSavedUsers = () => {
-  try {
-    const users = JSON.parse(localStorage.getItem('usernames') || '[]');
-    savedUsers.value = users;
-  } catch (error) {
-    console.error('Error loading from localStorage:', error);
-    savedUsers.value = [];
-  }
-};
-
-// const loadFromStorage = () => {
+// const saveToLocalStorage = () => {
 //   try {
-//     const users = JSON.parse(localStorage.getItem('usernames') || '[]');
-//     if (users.length > 0) {
-//       const lastUser = users[users.length - 1];
-//       formData.value.username = lastUser.username;
-//       formData.value.password = lastUser.password;
-//     } else {
-//       alert('No saved users found');
+//     const existingUsers = JSON.parse(localStorage.getItem('emails') || '[]');
+
+//     if (existingUsers.some(user => user.email === formData.value.email)) {
+//       alert('email already exists!');
+//       return;
 //     }
+
+//     const newUser = {
+//       id: Date.now(),
+//       email: formData.value.email,
+//       password: formData.value.password,
+//       timestamp: new Date().toISOString()
+//     };
+
+//     existingUsers.push(newUser);
+//     localStorage.setItem('emails', JSON.stringify(existingUsers));
+
+//     loadSavedUsers();
+
+//     clearForm();
+//     alert('User registered and saved successfully!');
 //   } catch (error) {
-//     console.error('Error loading from localStorage:', error);
-//     alert('Error loading user data');
+//     console.error('Error saving to localStorage:', error);
+//     alert('Error saving user data');
 //   }
 // };
 
-const clearStorage = () => {
-  if (confirm('Are you sure you want to clear all saved users?')) {
-    localStorage.removeItem('usernames');
-    savedUsers.value = [];
-    alert('Storage cleared successfully');
-  }
-};
+// const loadSavedUsers = () => {
+//   try {
+//     const users = JSON.parse(localStorage.getItem('emails') || '[]');
+//     savedUsers.value = users;
+//   } catch (error) {
+//     console.error('Error loading from localStorage:', error);
+//     savedUsers.value = [];
+//   }
+// };
 
-const formatDate = (timestamp) => {
-  return new Date(timestamp).toLocaleString();
-};
+// const clearStorage = () => {
+//   if (confirm('Are you sure you want to clear all saved users?')) {
+//     localStorage.removeItem('emails');
+//     savedUsers.value = [];
+//     alert('Storage cleared successfully');
+//   }
+// };
+
+// const formatDate = (timestamp) => {
+//   return new Date(timestamp).toLocaleString();
+// };
 </script>
 
 <style scoped>
