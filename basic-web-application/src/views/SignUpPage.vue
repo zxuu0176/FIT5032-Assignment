@@ -30,7 +30,7 @@
             </div>
           </form>
 
-          <div v-if="!errors.email && !errors.password && !errors.message" class="mt-4">
+          <div v-if="savedUsers.email != '' && !errors.email && !errors.password && !errors.message" class="mt-4">
             <h5>Confirmed Sign Up:</h5>
             <ul class="list-group">
               <li class="list-group-item d-flex justify-content-between align-items-center">
@@ -63,14 +63,14 @@ const submitForm = () => {
 
   if (!errors.value.email && !errors.value.password) {
     signup();
-    savedUsers.value.email = formData.value.email;
-    savedUsers.value.password = formData.value.password;
   }
 };
 
 const signup = () => {
   createUserWithEmailAndPassword(auth, formData.value.email, formData.value.password)
   .then(() => {
+    savedUsers.value.email = formData.value.email;
+    savedUsers.value.password = formData.value.password;
     alert("Firebase Register Successful!")
     router.push('/login')
   }).catch((error) => {
@@ -91,7 +91,12 @@ const clearForm = () => {
     };
     errors.value = {
       email: null,
-      password: null
+      password: null,
+      message: null
+    };
+    savedUsers.value = {
+      email: '',
+      password: ''
     };
 };
 
