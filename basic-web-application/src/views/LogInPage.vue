@@ -62,7 +62,7 @@ const login = () => {
   signInWithEmailAndPassword(auth, formData.value.email, formData.value.password)
   .then((userCredential) => {
     const user = userCredential.user;
-    alert("Login Successful! Welcome " + (user.displayName || user.email));
+    alert("Login Successful! Welcome " + (user.email));
     router.push("/");
   }).catch((error) => {
       if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") {
