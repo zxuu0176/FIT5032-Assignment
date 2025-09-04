@@ -131,7 +131,7 @@ const validatePassword = (blur) => {
   } else if (!hasSpecialChar) {
     if (blur) errors.value.password = "Password must contain at least one special character.";
   } else {
-    errors.value. password = null;
+    errors.value.password = null;
   }
 };
 </script>
