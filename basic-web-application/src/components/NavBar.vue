@@ -56,6 +56,7 @@ const navItems = [
   { name: 'Resource', path: '/resource' },
   { name: 'Membership', path: '/member' },
   { name: 'Contact', path: '/contact' },
+  { name: 'Admin', path: '/admin' },
   { name: 'Log In', path: '/login' },
   { name: 'Sign Up', path: '/signup'}
 ]

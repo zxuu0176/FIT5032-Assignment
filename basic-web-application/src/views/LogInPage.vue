@@ -75,7 +75,7 @@ const login = () => {
         errors.value.message = "Login failed: " + error.message;
       }
       console.log(error.code);
-      clearWrongForm();
+      // clearWrongForm();
     })
 };
 
@@ -91,12 +91,12 @@ const clearForm = () => {
     };
 };
 
-const clearWrongForm = () => {
-    formData.value = {
-      email: '',
-      password: ''
-    };
-};
+// const clearWrongForm = () => {
+//     formData.value = {
+//       email: '',
+//       password: ''
+//     };
+// };
 
 const errors = ref({
     email: null,
