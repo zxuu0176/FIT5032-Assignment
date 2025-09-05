@@ -40,9 +40,11 @@
 import { ref } from 'vue';
 import { getAuth, signInWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'vue-router';
+import { useAuth } from '../functions/role';
 
 const router = useRouter();
 const auth = getAuth();
+const roleAuth = useAuth();
 
 const formData = ref({
     email: '',
@@ -63,6 +65,7 @@ const login = () => {
   .then((userCredential) => {
     const user = userCredential.user;
     alert("Login Successful! Welcome " + (user.email));
+    roleAuth.getRole(user.email);
     router.push("/");
   }).catch((error) => {
       if (error.code === "auth/user-not-found" || error.code === "auth/invalid-credential") {
@@ -74,8 +77,6 @@ const login = () => {
       } else {
         errors.value.message = "Login failed: " + error.message;
       }
-      console.log(error.code);
-      // clearWrongForm();
     })
 };
 
@@ -90,13 +91,6 @@ const clearForm = () => {
       message: null
     };
 };
-
-// const clearWrongForm = () => {
-//     formData.value = {
-//       email: '',
-//       password: ''
-//     };
-// };
 
 const errors = ref({
     email: null,

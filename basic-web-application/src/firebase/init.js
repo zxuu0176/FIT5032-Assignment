@@ -16,4 +16,6 @@ const db = getFirestore();
 export const initFirebase = () => {
   return initializeApp(firebaseConfig);
 };
-export default db;
+export const initdb = () => {
+  return db;
+};
