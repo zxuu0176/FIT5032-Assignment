@@ -1,14 +1,575 @@
 <template>
-  <div class="home-page">
-    <h1>Welcome to the Home Page</h1>
-    <p>This is the main landing page of the application.</p>
+  <div class="resource-page">
+    <div class="container mt-4">
+      <h1>Basketball Programs for International Students</h1>
+      <p>Join our basketball programs designed for international students at the university.</p>
+
+      <!-- Programs List -->
+      <div class="row mt-4">
+        <div v-for="program in programs" :key="program.id" class="col-md-6 mb-4">
+          <div class="card">
+            <div class="card-header">
+              <div class="d-flex justify-content-between align-items-center">
+                <h5>{{ program.title }}</h5>
+                <span class="badge bg-secondary">{{ program.level }}</span>
+              </div>
+
+              <!-- Rating Display -->
+              <div class="d-flex align-items-center mt-2">
+                <div class="rating-display">
+                  <span
+                    v-for="i in 5"
+                    :key="i"
+                    class="star"
+                    :class="{ 'filled': i <= Math.round(program.averageRating) }"
+                  >
+                    &#9733;
+                  </span>
+                  <span class="ms-2 text-muted">
+                    {{ program.averageRating }} ({{ program.totalRatings }} reviews)
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <div class="card-body">
+              <p>{{ program.description }}</p>
+
+              <ul class="list-unstyled">
+                <li><strong>Duration:</strong> {{ program.duration }}</li>
+                <li><strong>Schedule:</strong> {{ program.schedule }}</li>
+                <li><strong>Location:</strong> {{ program.location }}</li>
+                <li><strong>Price:</strong> {{ program.price }}</li>
+                <li><strong>Instructor:</strong> {{ program.instructor }}</li>
+              </ul>
+
+              <h6>What's Included:</h6>
+              <ul>
+                <li v-for="feature in program.features" :key="feature">{{ feature }}</li>
+              </ul>
+
+              <!-- Recent Reviews -->
+              <div class="mb-3">
+                <h6>Recent Reviews:</h6>
+                <div class="reviews-container">
+                  <div
+                    v-for="review in program.ratings.slice(-2)"
+                    :key="review.user"
+                    class="review-item bg-light p-2 rounded mb-2"
+                  >
+                    <div class="d-flex align-items-center mb-1">
+                      <strong class="me-2">{{ review.user }}</strong>
+                      <div class="rating-small">
+                        <span
+                          v-for="i in 5"
+                          :key="i"
+                          class="star small"
+                          :class="{ 'filled': i <= review.rating }"
+                        >
+                          &starf;
+                        </span>
+                      </div>
+                    </div>
+                    <p class="mb-0 text-muted small">{{ review.comment }}</p>
+                  </div>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 mb-3">
+                <button @click="selectProgram(program.title)" class="btn btn-primary">
+                  Register for this Program
+                </button>
+                <button
+                  @click="toggleRatingForm(program.id)"
+                  class="btn btn-success"
+                  :class="{ 'btn-outline-success': selectedProgramForRating === program.id }"
+                >
+                  {{ selectedProgramForRating === program.id ? 'Cancel Rating' : 'Rate Program' }}
+                </button>
+              </div>
+
+              <!-- Rating Form -->
+              <div v-if="selectedProgramForRating === program.id" class="rating-form bg-light p-3 rounded">
+                <h6>Rate this Program</h6>
+
+                <div class="mb-3">
+                  <label class="form-label">Your Name:</label>
+                  <input
+                    type="text"
+                    v-model="newRating.user"
+                    class="form-control"
+                    placeholder="Enter your name"
+                  />
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Rating:</label>
+                  <div class="d-flex align-items-center">
+                    <div class="rating-input">
+                      <span
+                        v-for="i in 5"
+                        :key="i"
+                        class="star interactive"
+                        :class="{ 'filled': i <= newRating.rating, 'hover': i <= hoverRating }"
+                        @click="setRating(i)"
+                        @mouseenter="hoverRating = i"
+                        @mouseleave="hoverRating = 0"
+                      >
+                        &#9733;
+                      </span>
+                    </div>
+                    <span class="ms-2 text-muted small">
+                      ({{ newRating.rating }}/5)
+                    </span>
+                  </div>
+                </div>
+
+                <div class="mb-3">
+                  <label class="form-label">Comment:</label>
+                  <textarea
+                    v-model="newRating.comment"
+                    class="form-control"
+                    rows="3"
+                    placeholder="Share your experience with this program..."
+                  ></textarea>
+                </div>
+
+                <button
+                  @click="submitRating(program.id)"
+                  class="btn btn-success me-2"
+                  :disabled="!canSubmitRating"
+                >
+                  Submit Rating
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Registration Form -->
+      <div class="row mt-5">
+        <div class="col-md-8">
+          <div class="card">
+            <div class="card-header">
+              <h4>Program Registration</h4>
+            </div>
+            <div class="card-body">
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Full Name</label>
+                  <input
+                    type="text"
+                    v-model="form.name"
+                    class="form-control"
+                    placeholder="Enter your name"
+                  >
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Email</label>
+                  <input
+                    type="email"
+                    v-model="form.email"
+                    class="form-control"
+                    placeholder="Enter your email"
+                  >
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Country</label>
+                  <select v-model="form.country" class="form-select">
+                    <option value="">Select your country</option>
+                    <option v-for="country in countries" :key="country" :value="country">
+                      {{ country }}
+                    </option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Phone</label>
+                  <input
+                    type="tel"
+                    v-model="form.phone"
+                    class="form-control"
+                    placeholder="Enter phone number"
+                  >
+                </div>
+              </div>
+
+              <div class="row mb-3">
+                <div class="col-md-6">
+                  <label class="form-label">Basketball Experience</label>
+                  <select v-model="form.experience" class="form-select">
+                    <option value="">Select experience level</option>
+                    <option value="beginner">Beginner</option>
+                    <option value="intermediate">Intermediate</option>
+                    <option value="advanced">Advanced</option>
+                  </select>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label">Program</label>
+                  <select v-model="form.program" class="form-select">
+                    <option value="">Select a program</option>
+                    <option v-for="program in programs" :key="program.id" :value="program.title">
+                      {{ program.title }}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              <button @click="submitRegistration" class="btn btn-success">
+                Submit Registration
+              </button>
+              <button @click="clearForm" class="btn btn-secondary ms-2">
+                Clear Form
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact Info -->
+      <div class="row mt-4">
+        <div class="col-12">
+          <div class="card">
+            <div class="card-header">
+              <h4>Contact Information</h4>
+            </div>
+            <div class="card-body">
+              <div class="row">
+                <div class="col-md-4">
+                  <h6>Phone</h6>
+                  <p>+1 (555) 123-BALL</p>
+                </div>
+                <div class="col-md-4">
+                  <h6>Email</h6>
+                  <p>basketball@university.edu</p>
+                </div>
+                <div class="col-md-4">
+                  <h6>Office</h6>
+                  <p>Student Center, Room 205</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup>
+import { ref, computed, onMounted } from 'vue';
+import { useRating } from '../functions/rating';
 
+const ratingAuth = useRating();
+
+const form = ref({
+  name: '',
+  email: '',
+  country: '',
+  phone: '',
+  experience: '',
+  program: ''
+});
+
+const selectedProgramForRating = ref(null);
+const hoverRating = ref(0);
+
+const newRating = ref({
+  rating: 0,
+  comment: '',
+  user: ''
+});
+
+const programs = ref([
+  {
+    id: 1,
+    title: "Beginner International League",
+    level: "Beginner",
+    description: "Learn basketball basics in a friendly environment for international students.",
+    duration: "12 weeks",
+    schedule: "Saturdays 10:00 AM - 12:00 PM",
+    location: "University Gym",
+    price: "$150",
+    instructor: "Coach Rodriguez",
+    features: [
+      "Basic skills training",
+      "Game rules explanation",
+      "Equipment provided",
+      "Cultural activities"
+    ],
+    averageRating: 0,
+    totalRatings: 0,
+    ratings: [
+      // { user: "Maria S.", rating: 5, comment: "Great for beginners! Coach Rodriguez is very patient." },
+      // { user: "Ahmed K.", rating: 4, comment: "Good program, learned a lot about basketball fundamentals." },
+      // { user: "Lisa C.", rating: 4, comment: "Nice cultural activities along with basketball training." }
+    ]
+  },
+  {
+    id: 2,
+    title: "Intermediate Skills Program",
+    level: "Intermediate",
+    description: "Improve your basketball skills with structured training sessions.",
+    duration: "16 weeks",
+    schedule: "Tuesdays & Thursdays 6:00 PM - 8:00 PM",
+    location: "Community Center",
+    price: "$220",
+    instructor: "Coach Kim",
+    features: [
+      "Advanced techniques",
+      "Team strategies",
+      "Fitness training",
+      "Practice games"
+    ],
+    averageRating: 0,
+    totalRatings: 0,
+    ratings: [
+      // { user: "James L.", rating: 5, comment: "Excellent program! Really improved my shooting technique." },
+      // { user: "Sofia M.", rating: 4, comment: "Good balance of skills and fitness training." },
+      // { user: "Chen W.", rating: 5, comment: "Coach Kim is fantastic, very knowledgeable." }
+    ]
+  },
+  {
+    id: 3,
+    title: "Competitive League",
+    level: "Advanced",
+    description: "Join competitive games and tournaments for experienced players.",
+    duration: "Season (6 months)",
+    schedule: "3 times per week",
+    location: "Various venues",
+    price: "$350",
+    instructor: "Coach Thompson",
+    features: [
+      "Tournament play",
+      "Professional coaching",
+      "Team uniforms",
+      "Statistics tracking"
+    ],
+    averageRating: 0,
+    totalRatings: 0,
+    ratings: [
+      // { user: "Marcus J.", rating: 5, comment: "High level competition, great for serious players." },
+      // { user: "Elena P.", rating: 5, comment: "Professional level coaching and excellent facilities." },
+      // { user: "David R.", rating: 4, comment: "Challenging but very rewarding experience." }
+    ]
+  },
+  {
+    id: 4,
+    title: "Cultural Exchange Program",
+    level: "All Levels",
+    description: "Basketball combined with cultural activities and friendship building.",
+    duration: "8 weeks",
+    schedule: "Sundays 2:00 PM - 4:00 PM",
+    location: "Student Center",
+    price: "$120",
+    instructor: "Coach Chang",
+    features: [
+      "Mixed skill levels",
+      "Cultural events",
+      "Language practice",
+      "Social activities"
+    ],
+    averageRating: 0,
+    totalRatings: 0,
+    ratings: [
+      // { user: "Yuki T.", rating: 5, comment: "Amazing cultural exchange! Made so many friends." },
+      // { user: "Pedro G.", rating: 4, comment: "Great way to practice English while playing basketball." },
+      // { user: "Anna K.", rating: 4, comment: "Fun activities and welcoming community." }
+    ]
+  }
+]);
+
+const updateProgramRatings = (programId) => {
+  const index = programs.value.findIndex(p => p.id === programId);
+  const newRatings = ref([]);
+
+  ratingAuth.getRating(1);
+  // console.log(ratingAuth.ratings);
+  // console.log(newRatings.value);
+  newRatings.value = ratingAuth.ratings;
+
+  if (index !== -1) {
+    programs.value[index].ratings = newRatings;
+
+    const totalRatings = newRatings.value.length;
+
+    const average =
+      newRatings.value.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
+
+    programs.value[index].totalRatings = totalRatings;
+    programs.value[index].averageRating = Math.round(average * 10) / 10;
+  }
+};
+
+onMounted(() => {
+  // console.log("Beginning...");
+  updateProgramRatings(1);
+});
+
+const countries = ref([
+  "China", "India", "South Korea", "Japan", "Brazil", "Mexico",
+  "Germany", "France", "Canada", "Australia", "Other"
+]);
+
+const canSubmitRating = computed(() => {
+  return newRating.value.user.trim() &&
+         newRating.value.comment.trim() &&
+         newRating.value.rating > 0;
+});
+
+const selectProgram = (programTitle) => {
+  form.value.program = programTitle;
+};
+
+const toggleRatingForm = (programId) => {
+  if (selectedProgramForRating.value === programId) {
+    selectedProgramForRating.value = null;
+    resetRatingForm();
+  } else {
+    selectedProgramForRating.value = programId;
+    resetRatingForm();
+  }
+};
+
+const setRating = (rating) => {
+  newRating.value.rating = rating;
+};
+
+const resetRatingForm = () => {
+  newRating.value = {
+    rating: 0,
+    comment: '',
+    user: ''
+  };
+  hoverRating.value = 0;
+};
+
+const submitRating = (programId) => {
+  if (!canSubmitRating.value) {
+    alert('Please fill in your name, rating, and comment');
+    return;
+  }
+
+  const programIndex = programs.value.findIndex(p => p.id === programId);
+  if (programIndex !== -1) {
+    const program = programs.value[programIndex];
+
+    // Add new rating
+    program.ratings.push({
+      user: newRating.value.user,
+      rating: newRating.value.rating,
+      comment: newRating.value.comment
+    });
+
+    // Update totals and average
+    const newTotal = program.totalRatings + 1;
+    const newAverage = ((program.averageRating * program.totalRatings) + newRating.value.rating) / newTotal;
+
+    program.totalRatings = newTotal;
+    program.averageRating = Math.round(newAverage * 10) / 10;
+
+    console.log('Rating data:', newRating)
+    console.log('Program ID:', programId)
+    console.log('User field:', newRating.value?.user)
+    console.log('Rating field:', newRating.value?.rating)
+    console.log('Comment field:', newRating.value?.comment)
+    ratingAuth.addRating(newRating.value, programId);
+
+    // Reset form and close
+    resetRatingForm();
+    selectedProgramForRating.value = null;
+
+    alert('Thank you for your rating!');
+  }
+};
+
+const submitRegistration = () => {
+  if (!form.value.name || !form.value.email || !form.value.program) {
+    alert('Please fill in required fields: Name, Email, and Program');
+    return;
+  }
+
+  alert(`Thank you ${form.value.name}! Your registration for ${form.value.program} has been submitted.`);
+  clearForm();
+};
+
+const clearForm = () => {
+  form.value = {
+    name: '',
+    email: '',
+    country: '',
+    phone: '',
+    experience: '',
+    program: ''
+  };
+};
 </script>
 
 <style scoped>
+.resource-page {
+  padding: 20px 0;
+}
 
+.card {
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #dee2e6;
+}
+
+.btn {
+  margin-right: 10px;
+}
+
+.star {
+  font-size: 18px;
+  color: #ddd;
+  transition: color 0.2s;
+  margin-right: 1px;
+}
+
+.star.filled {
+  color: #ffc107;
+}
+
+.star.small {
+  font-size: 14px;
+}
+
+.star.interactive {
+  cursor: pointer;
+  font-size: 20px;
+}
+
+.star.interactive:hover,
+.star.hover {
+  color: #ffc107;
+  transform: scale(1.1);
+}
+
+.rating-form {
+  border-left: 4px solid #28a745;
+}
+
+.reviews-container {
+  max-height: 120px;
+  overflow-y: auto;
+}
+
+.review-item {
+  font-size: 0.9rem;
+}
+
+.d-flex.gap-2 {
+  gap: 0.5rem !important;
+}
+
+.rating-input {
+  display: inline-block;
+}
 </style>
