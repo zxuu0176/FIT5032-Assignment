@@ -260,10 +260,9 @@
 </template>
 
 <script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRating } from '../functions/rating';
-
-const ratingAuth = useRating();
+import { ref, computed, onMounted, onUnmounted } from 'vue';
+import { initdb } from '../firebase/init';
+import { collection, query, where, onSnapshot, addDoc } from "firebase/firestore";
 
 const form = ref({
   name: '',
@@ -302,11 +301,7 @@ const programs = ref([
     ],
     averageRating: 0,
     totalRatings: 0,
-    ratings: [
-      // { user: "Maria S.", rating: 5, comment: "Great for beginners! Coach Rodriguez is very patient." },
-      // { user: "Ahmed K.", rating: 4, comment: "Good program, learned a lot about basketball fundamentals." },
-      // { user: "Lisa C.", rating: 4, comment: "Nice cultural activities along with basketball training." }
-    ]
+    ratings: []
   },
   {
     id: 2,
@@ -326,11 +321,7 @@ const programs = ref([
     ],
     averageRating: 0,
     totalRatings: 0,
-    ratings: [
-      // { user: "James L.", rating: 5, comment: "Excellent program! Really improved my shooting technique." },
-      // { user: "Sofia M.", rating: 4, comment: "Good balance of skills and fitness training." },
-      // { user: "Chen W.", rating: 5, comment: "Coach Kim is fantastic, very knowledgeable." }
-    ]
+    ratings: []
   },
   {
     id: 3,
@@ -350,11 +341,7 @@ const programs = ref([
     ],
     averageRating: 0,
     totalRatings: 0,
-    ratings: [
-      // { user: "Marcus J.", rating: 5, comment: "High level competition, great for serious players." },
-      // { user: "Elena P.", rating: 5, comment: "Professional level coaching and excellent facilities." },
-      // { user: "David R.", rating: 4, comment: "Challenging but very rewarding experience." }
-    ]
+    ratings: []
   },
   {
     id: 4,
@@ -374,43 +361,54 @@ const programs = ref([
     ],
     averageRating: 0,
     totalRatings: 0,
-    ratings: [
-      // { user: "Yuki T.", rating: 5, comment: "Amazing cultural exchange! Made so many friends." },
-      // { user: "Pedro G.", rating: 4, comment: "Great way to practice English while playing basketball." },
-      // { user: "Anna K.", rating: 4, comment: "Fun activities and welcoming community." }
-    ]
+    ratings: []
   }
 ]);
-
-const updateProgramRatings = async (programId) => {
-  const index = programs.value.findIndex(p => p.id === programId);
-  if (index === -1) return;
-
-  await ratingAuth.getRating(programId);
-  const newRatings = ratingAuth.ratings;
-
-  programs.value[index].ratings = newRatings;
-
-  const totalRatings = newRatings.length;
-  const average =
-    totalRatings > 0
-      ? newRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
-      : 0;
-
-  programs.value[index].totalRatings = totalRatings;
-  programs.value[index].averageRating = Math.round(average * 10) / 10;
-};
-
-onMounted(async () => {
-  for (const program of programs.value) {
-    await updateProgramRatings(program.id);
-  }
-});
 
 const countries = ref([
   "China", "India", "South Korea", "Japan", "Brazil", "Mexico",
   "Germany", "France", "Canada", "Australia", "Other"
 ]);
+
+const programSnapshots = ref({});
+
+const getProgramRatings = (programId) => {
+  const db = initdb();
+  const q = query(collection(db, "ratings"), where("programID", "==", programId));
+
+  const unsubscribe = onSnapshot(q, (snapshot) => {
+    const index = programs.value.findIndex(p => p.id === programId);
+    if (index === -1) return;
+
+    const newRatings = snapshot.empty
+      ? []
+      : snapshot.docs.map(doc => ({ ...doc.data() }));
+
+    programs.value[index].ratings = newRatings;
+
+    const totalRatings = newRatings.length;
+    const average =
+      totalRatings > 0
+        ? newRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+        : 0;
+
+    programs.value[index].totalRatings = totalRatings;
+    programs.value[index].averageRating = Math.round(average * 10) / 10;
+  });
+
+  programSnapshots.value[programId] = unsubscribe;
+};
+
+onMounted(() => {
+  programs.value.forEach(program => getProgramRatings(program.id));
+});
+
+onUnmounted(() => {
+  Object.values(programSnapshots.value).forEach(unsubscribe => {
+    if (typeof unsubscribe === 'function') unsubscribe();
+  });
+  programSnapshots.value = {};
+});
 
 const canSubmitRating = computed(() => {
   return newRating.value.user.trim() &&
@@ -437,51 +435,27 @@ const setRating = (rating) => {
 };
 
 const resetRatingForm = () => {
-  newRating.value = {
-    rating: 0,
-    comment: '',
-    user: ''
-  };
+  newRating.value = { rating: 0, comment: '', user: '' };
   hoverRating.value = 0;
 };
 
-const submitRating = (programId) => {
+const submitRating = async (programId) => {
   if (!canSubmitRating.value) {
     alert('Please fill in your name, rating, and comment');
     return;
   }
 
-  const programIndex = programs.value.findIndex(p => p.id === programId);
-  if (programIndex !== -1) {
-    const program = programs.value[programIndex];
+  const db = initdb();
+  await addDoc(collection(db, "ratings"), {
+    programID: programId,
+    user: newRating.value.user,
+    rating: newRating.value.rating,
+    comment: newRating.value.comment
+  });
 
-    // Add new rating
-    program.ratings.push({
-      user: newRating.value.user,
-      rating: newRating.value.rating,
-      comment: newRating.value.comment
-    });
-
-    // Update totals and average
-    const newTotal = program.totalRatings + 1;
-    const newAverage = ((program.averageRating * program.totalRatings) + newRating.value.rating) / newTotal;
-
-    program.totalRatings = newTotal;
-    program.averageRating = Math.round(newAverage * 10) / 10;
-
-    console.log('Rating data:', newRating)
-    console.log('Program ID:', programId)
-    console.log('User field:', newRating.value?.user)
-    console.log('Rating field:', newRating.value?.rating)
-    console.log('Comment field:', newRating.value?.comment)
-    ratingAuth.addRating(newRating.value, programId);
-
-    // Reset form and close
-    resetRatingForm();
-    selectedProgramForRating.value = null;
-
-    alert('Thank you for your rating!');
-  }
+  resetRatingForm();
+  selectedProgramForRating.value = null;
+  alert('Thank you for your rating!');
 };
 
 const submitRegistration = () => {
@@ -489,7 +463,6 @@ const submitRegistration = () => {
     alert('Please fill in required fields: Name, Email, and Program');
     return;
   }
-
   alert(`Thank you ${form.value.name}! Your registration for ${form.value.program} has been submitted.`);
   clearForm();
 };
