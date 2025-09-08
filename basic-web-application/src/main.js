@@ -13,3 +13,9 @@ app.use(pinia)
 app.mount('#app');
 
 // pwd: Zhenjie325!
+
+// acc: admin@monash.edu
+// pwd: Admin1234!
+
+// acc: user@student.monash.edu
+// pwd: User1234!

@@ -37,7 +37,7 @@ export const useRating = defineStore('rating', () => {
       comment: ratingData.comment,
       programID: programID
     };
-    console.log(docData);
+    // console.log(docData);
     const db = initdb();
 
     const docRef = await addDoc(collection(db, 'ratings'), docData);

@@ -1,6 +1,6 @@
 import { initdb } from '../firebase/init';
 import { defineStore } from "pinia";
-import { collection, query, where, getDocs } from "firebase/firestore";
+import { collection, addDoc, query, where, getDocs } from "firebase/firestore";
 import { ref } from 'vue';
 
 export const useAuth = defineStore('auth', () => {
@@ -20,9 +20,21 @@ export const useAuth = defineStore('auth', () => {
     role.value = doc.data().role;
   };
 
+  const addRole = async (newEmail, newRole) => {
+    const db = initdb();
+    const docData = {
+      email: newEmail,
+      role: newRole
+    };
+
+    const docRef = await addDoc(collection(db, 'roles'), docData);
+    console.log('Rating added with ID: ', docRef.id);
+  };
+
   return {
     role,
-    getRole
+    getRole,
+    addRole
   }
 });
 

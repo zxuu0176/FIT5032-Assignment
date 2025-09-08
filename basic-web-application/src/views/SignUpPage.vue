@@ -24,6 +24,21 @@
                   <div v-if="errors.password" class="text-danger">{{ errors.password }}</div>
               </div>
             </div>
+            <div class="row mb-3">
+              <div class="col-12">
+                <label class="form-label mb-3">Select Role</label>
+                <div class="role-selection-horizontal">
+                  <div class="role-option">
+                    <input type="radio" id="user" value="user" v-model="formData.role" class="me-2">
+                    <label for="user">User (Standard access)</label>
+                  </div>
+                  <div class="role-option">
+                    <input type="radio" id="admin" value="admin" v-model="formData.role" class="me-2">
+                    <label for="admin">Admin (Full access)</label>
+                  </div>
+                </div>
+              </div>
+            </div>
             <div class="text-center">
               <button type="submit" class="btn btn-primary me-2">Submit</button>
               <button type="button" class="btn btn-secondary me-2" @click="clearForm">Clear</button>
@@ -34,9 +49,10 @@
             <h5>Confirmed Sign Up:</h5>
             <ul class="list-group">
               <li class="list-group-item d-flex justify-content-between align-items-center">
-                {{ savedUsers.email }}
+                {{ savedUsers.email }} - Role: {{ savedUsers.role }}
               </li>
             </ul>
+            <button type="button" class="btn btn-primary me-2" @click="confirmSignUp">Confirm Signup</button>
           </div>
         </div>
       </div>
@@ -48,13 +64,16 @@
 import { ref } from 'vue';
 import { getAuth, createUserWithEmailAndPassword } from 'firebase/auth';
 import { useRouter } from 'vue-router';
+import { useAuth } from '../functions/role';
 
 const router = useRouter();
 const auth = getAuth();
+const roleAuth = useAuth();
 
 const formData = ref({
     email: '',
-    password: ''
+    password: '',
+    role: ''
 });
 
 const submitForm = () => {
@@ -66,13 +85,19 @@ const submitForm = () => {
   }
 };
 
+const confirmSignUp = () => {
+  router.push('/login');
+}
+
 const signup = () => {
   createUserWithEmailAndPassword(auth, formData.value.email, formData.value.password)
   .then(() => {
     savedUsers.value.email = formData.value.email;
     savedUsers.value.password = formData.value.password;
-    alert("Firebase Register Successful!")
-    router.push('/login')
+    savedUsers.value.role = formData.value.role;
+
+    roleAuth.addRole(formData.value.email, formData.value.role);
+    alert("Firebase Register Successful!");
   }).catch((error) => {
       if (error.code === "auth/email-already-in-use") {
         errors.value.message = "This email is already registered. Please log in instead.";
@@ -87,7 +112,8 @@ const signup = () => {
 const clearForm = () => {
     formData.value = {
       email: '',
-      password: ''
+      password: '',
+      role: ''
     };
     errors.value = {
       email: null,
@@ -96,7 +122,8 @@ const clearForm = () => {
     };
     savedUsers.value = {
       email: '',
-      password: ''
+      password: '',
+      role: ''
     };
 };
 
@@ -139,63 +166,10 @@ const validatePassword = (blur) => {
 
 const savedUsers = ref({
     email: '',
-    password: ''
+    password: '',
+    role: ''
 });
 
-// onMounted(() => {
-//   loadSavedUsers();
-// });
-
-// const saveToLocalStorage = () => {
-//   try {
-//     const existingUsers = JSON.parse(localStorage.getItem('emails') || '[]');
-
-//     if (existingUsers.some(user => user.email === formData.value.email)) {
-//       alert('email already exists!');
-//       return;
-//     }
-
-//     const newUser = {
-//       id: Date.now(),
-//       email: formData.value.email,
-//       password: formData.value.password,
-//       timestamp: new Date().toISOString()
-//     };
-
-//     existingUsers.push(newUser);
-//     localStorage.setItem('emails', JSON.stringify(existingUsers));
-
-//     loadSavedUsers();
-
-//     clearForm();
-//     alert('User registered and saved successfully!');
-//   } catch (error) {
-//     console.error('Error saving to localStorage:', error);
-//     alert('Error saving user data');
-//   }
-// };
-
-// const loadSavedUsers = () => {
-//   try {
-//     const users = JSON.parse(localStorage.getItem('emails') || '[]');
-//     savedUsers.value = users;
-//   } catch (error) {
-//     console.error('Error loading from localStorage:', error);
-//     savedUsers.value = [];
-//   }
-// };
-
-// const clearStorage = () => {
-//   if (confirm('Are you sure you want to clear all saved users?')) {
-//     localStorage.removeItem('emails');
-//     savedUsers.value = [];
-//     alert('Storage cleared successfully');
-//   }
-// };
-
-// const formatDate = (timestamp) => {
-//   return new Date(timestamp).toLocaleString();
-// };
 </script>
 
 <style scoped>
@@ -209,5 +183,16 @@ const savedUsers = ref({
   padding: 30px;
   background-color: #ffffff;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.role-selection-horizontal {
+  display: flex;
+  gap: 30px;
+  justify-content: flex-start;
+}
+
+.role-option {
+  display: flex;
+  align-items: center;
 }
 </style>
