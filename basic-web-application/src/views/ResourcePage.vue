@@ -53,7 +53,7 @@
                 <h6>Recent Reviews:</h6>
                 <div class="reviews-container">
                   <div
-                    v-for="review in program.ratings.slice(-2)"
+                    v-for="review in program.ratings"
                     :key="review.user"
                     class="review-item bg-light p-2 rounded mb-2"
                   >
@@ -382,31 +382,29 @@ const programs = ref([
   }
 ]);
 
-const updateProgramRatings = (programId) => {
+const updateProgramRatings = async (programId) => {
   const index = programs.value.findIndex(p => p.id === programId);
-  const newRatings = ref([]);
+  if (index === -1) return;
 
-  ratingAuth.getRating(1);
-  // console.log(ratingAuth.ratings);
-  // console.log(newRatings.value);
-  newRatings.value = ratingAuth.ratings;
+  await ratingAuth.getRating(programId);
+  const newRatings = ratingAuth.ratings;
 
-  if (index !== -1) {
-    programs.value[index].ratings = newRatings;
+  programs.value[index].ratings = newRatings;
 
-    const totalRatings = newRatings.value.length;
+  const totalRatings = newRatings.length;
+  const average =
+    totalRatings > 0
+      ? newRatings.reduce((sum, r) => sum + r.rating, 0) / totalRatings
+      : 0;
 
-    const average =
-      newRatings.value.reduce((sum, r) => sum + r.rating, 0) / totalRatings;
-
-    programs.value[index].totalRatings = totalRatings;
-    programs.value[index].averageRating = Math.round(average * 10) / 10;
-  }
+  programs.value[index].totalRatings = totalRatings;
+  programs.value[index].averageRating = Math.round(average * 10) / 10;
 };
 
-onMounted(() => {
-  // console.log("Beginning...");
-  updateProgramRatings(1);
+onMounted(async () => {
+  for (const program of programs.value) {
+    await updateProgramRatings(program.id);
+  }
 });
 
 const countries = ref([
