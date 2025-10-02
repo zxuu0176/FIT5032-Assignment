@@ -30,3 +30,4 @@ coverage
 *.tsbuildinfo
 
 src/firebase/init.js
+sendgrid.env
