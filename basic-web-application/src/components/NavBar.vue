@@ -27,28 +27,27 @@
           </li>
         </ul>
 
-        <!-- <form class="d-flex ms-3" role="search" @submit.prevent="handleSearch">
-          <input
-            v-model="searchQuery"
-            class="form-control me-2 border-2 border-light-subtle rounded-3"
-            type="search"
-            placeholder="Search"
-            aria-label="Search"
-          />
-          <button class="btn btn-outline-success rounded-3 px-3" type="submit">
-            Search
-          </button>
-        </form> -->
+        <div class="d-flex align-items-center ms-3">
+          <template v-if="userEmail">
+            <div class="me-3 text-secondary">{{ userEmail }}</div>
+            <button class="btn btn-outline-secondary btn-sm" @click="logout">Logout</button>
+          </template>
+          <template v-else>
+            <router-link class="btn btn-primary me-2 btn-sm" to="/login">Log In</router-link>
+            <router-link class="btn btn-outline-primary btn-sm" to="/signup">Sign Up</router-link>
+          </template>
+        </div>
       </div>
     </div>
   </nav>
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
+import { getAuth, onAuthStateChanged, signOut } from 'firebase/auth'
+import { useRouter } from 'vue-router'
 
 const isNavbarOpen = ref(false)
-// const searchQuery = ref('')
 
 const navItems = [
   { name: 'Home', path: '/' },
@@ -56,16 +55,34 @@ const navItems = [
   { name: 'Resource', path: '/resource' },
   { name: 'Membership', path: '/member' },
   { name: 'Contact', path: '/contact' },
-  { name: 'Admin', path: '/admin' },
-  { name: 'Log In', path: '/login' },
-  { name: 'Sign Up', path: '/signup'}
+  { name: 'Admin', path: '/admin' }
 ]
 
-// const handleSearch = () => {
-//   if (searchQuery.value.trim()) {
-//     console.log('Search:', searchQuery.value)
-//   }
-// }
+const router = useRouter()
+
+const userEmail = ref(null)
+let unsubscribe = null
+
+onMounted(() => {
+  const auth = getAuth()
+  unsubscribe = onAuthStateChanged(auth, (user) => {
+    userEmail.value = user ? user.email : null
+  })
+})
+
+onUnmounted(() => {
+  if (typeof unsubscribe === 'function') unsubscribe()
+})
+
+const logout = async () => {
+  try {
+    await signOut(getAuth())
+    userEmail.value = null
+    router.push('/')
+  } catch (err) {
+    console.error('Logout failed', err)
+  }
+}
 </script>
 
 <style scoped>
