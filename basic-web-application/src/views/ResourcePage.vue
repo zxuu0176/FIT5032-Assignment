@@ -431,12 +431,34 @@ const submitRating = async (programId) => {
   alert('Thank you for your rating!');
 };
 
-const submitRegistration = () => {
+const submitRegistration = async () => {
   if (!form.value.name || !form.value.email || !form.value.program) {
     alert('Please fill in required fields: Name, Email, and Program');
     return;
   }
-  alert(`Thank you ${form.value.name}! Your registration for ${form.value.program} has been submitted.`);
+
+  // Call Cloud Function to send confirmation email
+  try {
+    const functionUrl = `https://us-central1-basic-web-application-a7857.cloudfunctions.net/sendRegistrationEmail`;
+
+    const resp = await fetch(functionUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: form.value.name, email: form.value.email, program: form.value.program })
+    });
+
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({ error: 'unknown' }));
+      console.error('Failed to send registration email', err);
+      alert('Registration submitted but failed to send confirmation email.');
+    } else {
+      alert(`Thank you ${form.value.name}! A confirmation email was sent to ${form.value.email}.`);
+    }
+  } catch (e) {
+    console.error('Error calling sendRegistrationEmail:', e);
+    alert('Registration submitted but there was an error sending the confirmation email.');
+  }
+
   clearForm();
 };
 

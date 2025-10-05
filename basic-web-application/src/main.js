@@ -12,6 +12,7 @@ app.use(router);
 app.use(pinia);
 app.mount('#app');
 
+// zxuu0176@student.monash.edu
 // pwd: Zhenjie325!
 
 // acc: admin@monash.edu
