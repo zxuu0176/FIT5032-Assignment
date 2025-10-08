@@ -31,4 +31,3 @@ coverage
 
 src/firebase/init.js
 sendgrid.env
-src/data
