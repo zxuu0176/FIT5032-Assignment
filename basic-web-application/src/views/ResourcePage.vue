@@ -437,26 +437,60 @@ const submitRegistration = async () => {
     return;
   }
 
-  // Call Cloud Function to send confirmation email
   try {
+    // First, save the registration to Firestore
+    const db = initdb();
+    await addDoc(collection(db, "registrations"), {
+      name: form.value.name,
+      email: form.value.email,
+      country: form.value.country,
+      phone: form.value.phone,
+      experience: form.value.experience,
+      program: form.value.program,
+      timestamp: new Date()
+    });
+
+    console.log('Registration saved to Firestore');
+
+    // Then call Cloud Function to send confirmation email
     const functionUrl = `https://us-central1-basic-web-application-a7857.cloudfunctions.net/sendRegistrationEmail`;
+
+    console.log('Calling Cloud Function...');
 
     const resp = await fetch(functionUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: form.value.name, email: form.value.email, program: form.value.program })
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        name: form.value.name,
+        email: form.value.email,
+        program: form.value.program
+      })
     });
 
+    console.log('Response status:', resp.status);
+
     if (!resp.ok) {
-      const err = await resp.json().catch(() => ({ error: 'unknown' }));
-      console.error('Failed to send registration email', err);
-      alert('Registration submitted but failed to send confirmation email.');
+      // Try to get more detailed error
+      let errorData;
+      try {
+        errorData = await resp.json();
+      } catch {
+        errorData = { error: await resp.text() };
+      }
+
+      console.error('Cloud Function error details:', errorData);
+      alert(`Registration saved, but email failed: ${errorData.error || 'Unknown error'}`);
     } else {
-      alert(`Thank you ${form.value.name}! A confirmation email was sent to ${form.value.email}.`);
+      const result = await resp.json();
+      console.log('Email sent successfully:', result);
+      alert(`Thank you ${form.value.name}! Registration confirmed and email sent to ${form.value.email}.`);
     }
+
   } catch (e) {
-    console.error('Error calling sendRegistrationEmail:', e);
-    alert('Registration submitted but there was an error sending the confirmation email.');
+    console.error('Network error during registration:', e);
+    alert('Network error. Registration saved but could not send email.');
   }
 
   clearForm();
