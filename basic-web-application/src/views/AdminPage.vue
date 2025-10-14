@@ -3,8 +3,94 @@
     <h1>Welcome to the Admin Page</h1>
     <p>Welcome, {{userEmail}}.</p>
 
-    <!-- Users Table -->
+    <!-- Bulk Email Tool -->
     <div class="table-container">
+      <div class="table-header">
+        <h2>Bulk Email Tool</h2>
+      </div>
+
+      <div class="p-4">
+        <!-- Email Composition -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Email Subject:</label>
+          <input
+            v-model="emailSubject"
+            type="text"
+            class="form-control"
+            placeholder="Enter email subject"
+            :disabled="selectedUsers.length === 0"
+          >
+        </div>
+
+        <div class="mb-4">
+          <label class="form-label fw-bold">Email Message:</label>
+          <textarea
+            v-model="emailMessage"
+            class="form-control"
+            rows="6"
+            placeholder="Enter your email message here..."
+            :disabled="selectedUsers.length === 0"
+          ></textarea>
+          <small class="text-muted">You can use HTML formatting in your message.</small>
+        </div>
+
+        <!-- Recipient Selection -->
+        <div class="mb-4">
+          <label class="form-label fw-bold">Select Recipients:</label>
+          <div class="mb-2">
+            <button @click="selectAllUsers" class="btn btn-outline-primary btn-sm me-2">
+              Select All Users ({{ users.length }})
+            </button>
+            <button @click="selectFilteredUsers" class="btn btn-outline-primary btn-sm me-2">
+              Select Filtered Results ({{ filteredUsers.length }})
+            </button>
+            <button @click="clearSelection" class="btn btn-outline-secondary btn-sm">
+              Clear Selection
+            </button>
+          </div>
+          <div class="selected-users-info">
+            <span class="badge bg-primary">
+              {{ selectedUsers.length }} users selected
+            </span>
+            <small class="text-muted ms-2">
+              Click on users in the table below to select/deselect individually
+            </small>
+          </div>
+        </div>
+
+        <!-- Send Button -->
+        <div class="mb-4">
+          <button
+            @click="sendBulkEmail"
+            :disabled="!canSendEmail"
+            class="btn btn-success btn-lg"
+          >
+            <span v-if="isSending" class="spinner-border spinner-border-sm me-2"></span>
+            {{ isSending ? 'Sending Emails...' : `Send Bulk Email to ${selectedUsers.length} Users` }}
+          </button>
+        </div>
+
+        <!-- Results Display -->
+        <div v-if="emailResults" class="mt-4 p-3 rounded" :class="emailResults.success ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10'">
+          <h5>Email Results:</h5>
+          <p><strong>Successfully sent:</strong> {{ emailResults.summary.totalSent }} emails</p>
+          <p><strong>Failed:</strong> {{ emailResults.summary.totalFailed }} emails</p>
+          <p><strong>Success rate:</strong> {{ emailResults.summary.successRate }}</p>
+
+          <div v-if="emailResults.results.failed.length > 0" class="mt-3">
+            <h6>Failed Emails:</h6>
+            <ul class="list-group">
+              <li v-for="failed in emailResults.results.failed" :key="failed.email" class="list-group-item">
+                <strong>{{ failed.email }}</strong> - {{ failed.error }}
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Users Table -->
+    <div class="table-container mt-4">
       <div class="table-header">
         <h2>Users Management</h2>
         <div class="header-actions">
@@ -32,6 +118,14 @@
       <table id="usersTable" class="table table-striped table-bordered" style="width:100%">
         <thead>
           <tr>
+            <th>
+              <input
+                type="checkbox"
+                :checked="allUsersSelected"
+                @change="toggleSelectAll"
+                class="form-check-input"
+              >
+            </th>
             <th @click="sortTable('id')" class="sortable">
               ID
               <span v-if="sortField === 'id'" class="sort-indicator">
@@ -66,13 +160,27 @@
           </tr>
         </thead>
         <tbody>
-          <tr v-for="user in paginatedUsers" :key="user.id">
+          <tr
+            v-for="user in paginatedUsers"
+            :key="user.id"
+            :class="{ 'table-primary': isUserSelected(user.id) }"
+            @click="toggleUserSelection(user.id)"
+            style="cursor: pointer;"
+          >
+            <td @click.stop>
+              <input
+                type="checkbox"
+                :checked="isUserSelected(user.id)"
+                @change="toggleUserSelection(user.id)"
+                class="form-check-input"
+              >
+            </td>
             <td>{{ user.id }}</td>
             <td>{{ user.first_name }}</td>
             <td>{{ user.last_name }}</td>
             <td>{{ user.full_name }}</td>
             <td>{{ user.email }}</td>
-            <td>
+            <td @click.stop>
               <button @click="viewUser(user.id)" class="action-btn view-btn">View</button>
               <button @click="editUser(user.id)" class="action-btn edit-btn">Edit</button>
             </td>
@@ -155,6 +263,13 @@ let unsubscribe = null;
 const roleAuth = useAuth();
 const role = ref(null);
 
+// Bulk Email State
+const emailSubject = ref('');
+const emailMessage = ref('');
+const selectedUsers = ref([]); // Array of user IDs
+const emailResults = ref(null);
+const isSending = ref(false);
+
 onMounted(() => {
   const auth = getAuth()
   unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -217,6 +332,127 @@ const searchColumns = ref([
   }
 ]);
 
+// Computed properties for bulk email
+const canSendEmail = computed(() => {
+  return emailSubject.value &&
+         emailMessage.value &&
+         selectedUsers.value.length > 0 &&
+         !isSending.value;
+});
+
+const allUsersSelected = computed(() => {
+  return paginatedUsers.value.length > 0 &&
+         paginatedUsers.value.every(user => selectedUsers.value.includes(user.id));
+});
+
+// User selection methods
+const selectAllUsers = () => {
+  selectedUsers.value = users.value.map(user => user.id);
+};
+
+const selectFilteredUsers = () => {
+  selectedUsers.value = filteredUsers.value.map(user => user.id);
+};
+
+const clearSelection = () => {
+  selectedUsers.value = [];
+};
+
+const toggleSelectAll = () => {
+  if (allUsersSelected.value) {
+    // Deselect all users on current page
+    paginatedUsers.value.forEach(user => {
+      const index = selectedUsers.value.indexOf(user.id);
+      if (index > -1) {
+        selectedUsers.value.splice(index, 1);
+      }
+    });
+  } else {
+    // Select all users on current page
+    paginatedUsers.value.forEach(user => {
+      if (!selectedUsers.value.includes(user.id)) {
+        selectedUsers.value.push(user.id);
+      }
+    });
+  }
+};
+
+const toggleUserSelection = (userId) => {
+  const index = selectedUsers.value.indexOf(userId);
+  if (index > -1) {
+    selectedUsers.value.splice(index, 1);
+  } else {
+    selectedUsers.value.push(userId);
+  }
+};
+
+const isUserSelected = (userId) => {
+  return selectedUsers.value.includes(userId);
+};
+
+// Get selected user emails
+const getSelectedUserEmails = () => {
+  return users.value
+    .filter(user => selectedUsers.value.includes(user.id))
+    .map(user => user.email);
+};
+
+// Bulk email function
+const BULK_EMAIL_FUNCTION_URL = 'https://us-central1-basic-web-application-a7857.cloudfunctions.net/sendBulkEmail';
+
+// Update the sendBulkEmail function:
+const sendBulkEmail = async () => {
+  if (!canSendEmail.value) return;
+
+  isSending.value = true;
+  emailResults.value = null;
+
+  try {
+    const selectedEmails = getSelectedUserEmails();
+
+    // Get the current user's ID token
+    const auth = getAuth();
+    const user = auth.currentUser;
+    if (!user) {
+      throw new Error('User not authenticated');
+    }
+
+    const token = await user.getIdToken();
+
+    console.log('Sending bulk email to:', selectedEmails.length, 'users');
+
+    const response = await fetch(BULK_EMAIL_FUNCTION_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        userEmails: selectedEmails,
+        subject: emailSubject.value,
+        message: emailMessage.value,
+        emailType: 'admin-bulk'
+      })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || `HTTP error! status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    emailResults.value = result;
+
+    console.log('Bulk email results:', result);
+
+  } catch (error) {
+    console.error('Bulk email failed:', error);
+    // Your existing error handling...
+  } finally {
+    isSending.value = false;
+  }
+};
+
 // Load user data from mock_user.json
 const loadUserData = async () => {
   try {
@@ -230,6 +466,11 @@ const loadUserData = async () => {
     users.value = [];
   }
 };
+
+// ... (rest of your existing computed properties and methods remain the same)
+// filteredUsers, paginatedUsers, totalPages, startIndex, endIndex, applyColumnSearch,
+// sortTable, nextPage, previousPage, resetPagination, userStats, exportToPDF,
+// viewUser, editUser - all remain unchanged
 
 // Computed property for filtered users based on column searches
 const filteredUsers = computed(() => {
@@ -498,5 +739,42 @@ const editUser = (userId) => {
 </script>
 
 <style scoped>
-/* ... (keep all the existing styles exactly as they are) ... */
+/* Add these new styles for bulk email functionality */
+.selected-users-info {
+  margin-top: 10px;
+}
+
+.form-check-input {
+  margin: 0;
+}
+
+.table-primary {
+  background-color: #e3f2fd !important;
+}
+
+/* Ensure the existing styles are preserved */
+.admin-page {
+  padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.table-container {
+  background: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  margin-top: 20px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  background: #f8f9fa;
+}
+
+/* ... (rest of your existing styles) ... */
 </style>
