@@ -138,7 +138,7 @@ const OFFICE_COORDINATES = [145.1365, -37.9142] // [longitude, latitude] for Cla
 
 // Initialize map when component mounts
 onMounted(() => {
-  if (!MAPBOX_TOKEN || MAPBOX_TOKEN === 'pk.eyJ1IjoiamF5eGNhdHMiLCJhIjoiY21ncTFxdGl3Mmk4eTJqcHFzMTgyOHQwcSJ9.L3AEiq_aLblbdUQ_N09hrA') {
+  if (!MAPBOX_TOKEN || MAPBOX_TOKEN !== 'pk.eyJ1IjoiamF5eGNhdHMiLCJhIjoiY21ncTFxdGl3Mmk4eTJqcHFzMTgyOHQwcSJ9.L3AEiq_aLblbdUQ_N09hrA') {
     error.value = 'Please configure your Mapbox token first'
     return
   }
