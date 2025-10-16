@@ -15,6 +15,10 @@
     "start": "node server.js"
   },
   "dependencies": {
+    "@fullcalendar/daygrid": "^6.1.19",
+    "@fullcalendar/interaction": "^6.1.19",
+    "@fullcalendar/timegrid": "^6.1.19",
+    "@fullcalendar/vue3": "^6.1.19",
     "@sendgrid/mail": "^8.1.6",
     "axios": "^1.12.2",
     "bootstrap": "^5.3.7",
