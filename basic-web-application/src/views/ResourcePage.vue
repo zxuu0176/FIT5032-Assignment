@@ -4,7 +4,6 @@
       <h1>Basketball Programs for International Students</h1>
       <p>Join our basketball programs designed for international students at the university.</p>
 
-      <!-- Appointment Booking Section -->
       <div class="row mt-4">
         <div class="col-12">
           <div class="card">
@@ -13,7 +12,6 @@
               <p class="mb-0">Schedule your training sessions and program appointments</p>
             </div>
             <div class="card-body">
-              <!-- Calendar Controls -->
               <div class="row mb-4">
                 <div class="col-md-6">
                   <div class="mb-3">
@@ -39,13 +37,11 @@
                 </div>
               </div>
 
-              <!-- Calendar -->
               <FullCalendar
                 ref="calendarRef"
                 :options="calendarOptions"
               />
 
-              <!-- Booking Form -->
               <div v-if="selectedTimeSlot" class="booking-form mt-4 p-4 bg-light rounded">
                 <h5>Book Session</h5>
                 <div class="row">
@@ -93,7 +89,6 @@
                 </div>
               </div>
 
-              <!-- Conflict Warning -->
               <div v-if="bookingConflict" class="alert alert-warning mt-3">
                 This time slot conflicts with an existing booking. Please choose another time.
               </div>
@@ -102,7 +97,6 @@
         </div>
       </div>
 
-      <!-- Programs List -->
       <div class="row mt-4">
         <div v-for="program in programs" :key="program.id" class="col-md-6 mb-4">
           <div class="card">
@@ -112,7 +106,6 @@
                 <span class="badge bg-secondary">{{ program.level }}</span>
               </div>
 
-              <!-- Rating Display -->
               <div class="d-flex align-items-center mt-2">
                 <div class="rating-display">
                   <span
@@ -143,7 +136,6 @@
                 <li v-for="feature in program.features" :key="feature">{{ feature }}</li>
               </ul>
 
-              <!-- Recent Reviews -->
               <div class="mb-3">
                 <h6>Recent Reviews:</h6>
                 <div class="reviews-container">
@@ -183,7 +175,6 @@
                 </button>
               </div>
 
-              <!-- Rating Form -->
               <div v-if="selectedProgramForRating === program.id" class="rating-form bg-light p-3 rounded">
                 <h6>Rate this Program</h6>
 
@@ -242,7 +233,6 @@
         </div>
       </div>
 
-      <!-- Registration Form -->
       <div class="row mt-5">
         <div class="col-md-8">
           <div class="card">
@@ -353,7 +343,6 @@ const newRating = ref({
   user: ''
 });
 
-// Booking System Variables
 const selectedBookingProgram = ref('');
 const selectedCoach = ref('');
 const selectedTimeSlot = ref(null);
@@ -366,14 +355,13 @@ const bookingForm = ref({
   notes: ''
 });
 
-// Sample available time slots for booking
 const availableTimeSlots = ref([
   {
     id: 1,
     title: 'Beginner Session',
     program: 'Beginner International League',
     coach: 'Coach Rodriguez',
-    start: getNextDate(10, 0), // Next Saturday 10:00 AM
+    start: getNextDate(10, 0),
     end: getNextDate(12, 0),
     color: '#28a745',
     available: true
@@ -383,7 +371,7 @@ const availableTimeSlots = ref([
     title: 'Intermediate Training',
     program: 'Intermediate Skills Program',
     coach: 'Coach Kim',
-    start: getNextWeekday(2, 18, 0), // Next Tuesday 6:00 PM
+    start: getNextWeekday(2, 18, 0),
     end: getNextWeekday(2, 20, 0),
     color: '#007bff',
     available: true
@@ -393,7 +381,7 @@ const availableTimeSlots = ref([
     title: 'Advanced Practice',
     program: 'Competitive League',
     coach: 'Coach Thompson',
-    start: getNextWeekday(4, 18, 0), // Next Thursday 6:00 PM
+    start: getNextWeekday(4, 18, 0),
     end: getNextWeekday(4, 20, 0),
     color: '#dc3545',
     available: true
@@ -403,7 +391,7 @@ const availableTimeSlots = ref([
     title: 'Cultural Exchange',
     program: 'Cultural Exchange Program',
     coach: 'Coach Chang',
-    start: getNextDate(0, 14, 0), // Next Sunday 2:00 PM
+    start: getNextDate(0, 14, 0),
     end: getNextDate(0, 16, 0),
     color: '#6f42c1',
     available: true
@@ -500,7 +488,6 @@ const countries = ref([
 
 const programSnapshots = ref({});
 
-// Computed properties
 const uniqueCoaches = computed(() => {
   const coaches = new Set();
   programs.value.forEach(program => {
@@ -535,7 +522,6 @@ const canSubmitRating = computed(() => {
          newRating.value.rating > 0;
 });
 
-// Calendar Functions
 function getNextDate(dayOfWeek, hour = 0, minute = 0) {
   const date = new Date();
   date.setDate(date.getDate() + ((dayOfWeek + 7 - date.getDay()) % 7));
@@ -561,7 +547,6 @@ const updateCalendarEvents = () => {
 };
 
 const handleDateClick = (info) => {
-  // Check if clicked on an available time slot
   const event = info.event;
   if (event) {
     selectedTimeSlot.value = {
@@ -577,7 +562,6 @@ const handleDateClick = (info) => {
 };
 
 const handleSelect = (info) => {
-  // For creating new bookings (future enhancement)
   console.log('Selected:', info.start, info.end);
 };
 
@@ -594,16 +578,13 @@ const formatSelectedTime = () => {
   });
 };
 
-// UPDATED: Check Booking Conflict (simplified version)
 const checkBookingConflict = async (timeSlot) => {
   const db = initdb();
 
-  // Get all bookings and filter client-side to avoid complex query
   const q = query(collection(db, "bookings"));
 
   const snapshot = await getDocs(q);
 
-  // Filter for conflicts manually
   const conflicts = snapshot.docs.filter(doc => {
     const booking = doc.data();
     const bookingStart = booking.start?.toDate();
@@ -611,21 +592,18 @@ const checkBookingConflict = async (timeSlot) => {
     const slotStart = timeSlot.start;
     const slotEnd = timeSlot.end;
 
-    // Check if time slots overlap
     return bookingStart < slotEnd && bookingEnd > slotStart;
   });
 
   return conflicts.length > 0;
 };
 
-// UPDATED: Submit Booking with Email Confirmation
 const submitBooking = async () => {
   if (!canSubmitBooking.value) {
     alert('Please fill in all required fields');
     return;
   }
 
-  // Check for conflicts
   const hasConflict = await checkBookingConflict(selectedTimeSlot.value);
   if (hasConflict) {
     bookingConflict.value = true;
@@ -635,7 +613,6 @@ const submitBooking = async () => {
   try {
     const db = initdb();
 
-    // First, save the booking to Firestore
     await addDoc(collection(db, "bookings"), {
       ...bookingForm.value,
       ...selectedTimeSlot.value,
@@ -649,30 +626,45 @@ const submitBooking = async () => {
 
     console.log('Booking saved to Firestore');
 
-    // Then call Cloud Function to send confirmation email
+    const bookingData = {
+      name: bookingForm.value.name,
+      email: bookingForm.value.email,
+      program: selectedTimeSlot.value.program,
+      coach: selectedTimeSlot.value.coach,
+      bookingTime: formatSelectedTime()
+    };
+
+    const pdfAttachment = await generateBookingPDF(bookingData);
+
     const functionUrl = `https://us-central1-basic-web-application-a7857.cloudfunctions.net/sendRegistrationEmail`;
 
-    console.log('Calling Cloud Function for booking confirmation...');
+    console.log('Calling Cloud Function for booking confirmation with attachment...');
+
+    const requestBody = {
+      name: bookingForm.value.name,
+      email: bookingForm.value.email,
+      program: selectedTimeSlot.value.program,
+      type: 'booking',
+      bookingTime: formatSelectedTime(),
+      coach: selectedTimeSlot.value.coach
+    };
+
+    if (pdfAttachment) {
+      requestBody.attachment = pdfAttachment;
+      console.log("Pdf generated");
+    }
 
     const resp = await fetch(functionUrl, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({
-        name: bookingForm.value.name,
-        email: bookingForm.value.email,
-        program: selectedTimeSlot.value.program,
-        type: 'booking', // Add type to distinguish from program registration
-        bookingTime: formatSelectedTime(),
-        coach: selectedTimeSlot.value.coach
-      })
+      body: JSON.stringify(requestBody)
     });
 
     console.log('Response status:', resp.status);
 
     if (!resp.ok) {
-      // Try to get more detailed error
       let errorData;
       try {
         errorData = await resp.json();
@@ -682,26 +674,26 @@ const submitBooking = async () => {
 
       console.error('Cloud Function error details:', errorData);
 
-      // Update availability even if email fails
       const slotIndex = availableTimeSlots.value.findIndex(slot => slot.id === selectedTimeSlot.value.id);
       if (slotIndex !== -1) {
         availableTimeSlots.value[slotIndex].available = false;
         availableTimeSlots.value[slotIndex].color = '#6c757d';
       }
 
-      alert(`Booking confirmed! However, we couldn't send the confirmation email: ${errorData.error || 'Unknown error'}`);
+      const attachmentMessage = pdfAttachment ? ' (PDF attachment not sent)' : '';
+      alert(`Booking confirmed! However, we couldn't send the confirmation email${attachmentMessage}: ${errorData.error || 'Unknown error'}`);
     } else {
       const result = await resp.json();
       console.log('Booking confirmation email sent successfully:', result);
 
-      // Update availability
       const slotIndex = availableTimeSlots.value.findIndex(slot => slot.id === selectedTimeSlot.value.id);
       if (slotIndex !== -1) {
         availableTimeSlots.value[slotIndex].available = false;
         availableTimeSlots.value[slotIndex].color = '#6c757d';
       }
 
-      alert(`Booking confirmed! You have successfully booked ${selectedTimeSlot.value.title} on ${formatSelectedTime()}. A confirmation email has been sent to ${bookingForm.value.email}.`);
+      const attachmentMessage = pdfAttachment ? ' with PDF confirmation' : '';
+      alert(`Booking confirmed! You have successfully booked ${selectedTimeSlot.value.title} on ${formatSelectedTime()}. A confirmation email${attachmentMessage} has been sent to ${bookingForm.value.email}.`);
     }
 
     cancelBooking();
@@ -719,7 +711,6 @@ const cancelBooking = () => {
   bookingConflict.value = false;
 };
 
-// Calendar configuration
 const calendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: 'timeGridWeek',
@@ -743,7 +734,6 @@ const calendarOptions = {
   height: 'auto'
 };
 
-// Existing functions
 const getProgramRatings = (programId) => {
   const db = initdb();
   const q = query(collection(db, "ratings"), where("programID", "==", programId));
@@ -774,7 +764,6 @@ const getProgramRatings = (programId) => {
 onMounted(() => {
   programs.value.forEach(program => getProgramRatings(program.id));
 
-  // Initialize calendar
   setTimeout(() => {
     const calendarEl = document.getElementById('calendar');
     if (calendarEl) {
@@ -906,6 +895,53 @@ const clearForm = () => {
     program: ''
   };
 };
+
+const generateBookingPDF = async (bookingData) => {
+  try {
+    const { jsPDF } = await import('jspdf');
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(20);
+    doc.text('Inter Throw Organization', 20, 30);
+    doc.setFontSize(16);
+    doc.text('Booking Confirmation', 20, 45);
+
+    doc.setFontSize(12);
+    doc.text(`Booking ID: ${Date.now()}`, 20, 65);
+    doc.text(`Name: ${bookingData.name}`, 20, 80);
+    doc.text(`Email: ${bookingData.email}`, 20, 95);
+    doc.text(`Program: ${bookingData.program}`, 20, 110);
+    doc.text(`Coach: ${bookingData.coach}`, 20, 125);
+    doc.text(`Time: ${bookingData.bookingTime}`, 20, 140);
+    doc.text(`Date: ${new Date().toLocaleDateString()}`, 20, 155);
+
+    doc.text('Terms & Conditions:', 20, 180);
+    doc.setFontSize(10);
+    const terms = [
+      '1. Please arrive 15 minutes before your scheduled time.',
+      '2. Cancellations must be made 24 hours in advance.',
+      '3. Bring appropriate sports attire and equipment.',
+      '4. Follow all safety guidelines provided by your coach.'
+    ];
+
+    terms.forEach((term, index) => {
+      doc.text(term, 25, 195 + (index * 12));
+    });
+
+    const pdfBase64 = doc.output('datauristring').split(',')[1];
+
+    return {
+      content: pdfBase64,
+      filename: `booking-confirmation-${Date.now()}.pdf`,
+      type: 'application/pdf'
+    };
+
+  } catch (error) {
+    console.error('Error generating PDF:', error);
+    return null;
+  }
+};
 </script>
 
 <style scoped>
@@ -973,7 +1009,6 @@ const clearForm = () => {
   display: inline-block;
 }
 
-/* Calendar Styles */
 .calendar-container {
   background: white;
   border-radius: 8px;

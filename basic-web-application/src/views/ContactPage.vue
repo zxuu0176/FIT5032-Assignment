@@ -26,7 +26,6 @@
       </div>
     </div>
 
-    <!-- Map Section -->
     <div class="row mt-4">
       <div class="col-12">
         <div class="card">
@@ -34,7 +33,6 @@
             <h4>Find Our Location</h4>
           </div>
           <div class="card-body">
-            <!-- Search Controls -->
             <div class="row mb-3">
               <div class="col-md-6">
                 <div class="input-group">
@@ -66,22 +64,18 @@
               </div>
             </div>
 
-            <!-- Map Container -->
             <div id="map" style="height: 400px; width: 100%; border-radius: 0.375rem; overflow: hidden;"></div>
 
-            <!-- Loading State -->
             <div v-if="loading" class="mt-3 text-center">
               <div class="spinner-border text-primary" role="status">
                 <span class="visually-hidden">Loading...</span>
               </div>
             </div>
 
-            <!-- Error Message -->
             <div v-if="error" class="mt-3 alert alert-danger" role="alert">
               {{ error }}
             </div>
 
-            <!-- Search Results -->
             <div v-if="searchResults.length > 0" class="mt-3">
               <h6>Search Results:</h6>
               <div class="list-group">
@@ -98,7 +92,6 @@
               </div>
             </div>
 
-            <!-- Route Information -->
             <div v-if="routeInfo" class="mt-3 p-3 bg-light rounded">
               <h6>Route Information:</h6>
               <p><strong>Distance:</strong> {{ routeInfo.distance }} km</p>
@@ -118,10 +111,8 @@
 import { ref, onMounted } from 'vue'
 import mapboxgl from 'mapbox-gl'
 
-// Mapbox configuration - Replace with your actual token
 const MAPBOX_TOKEN = 'pk.eyJ1IjoiamF5eGNhdHMiLCJhIjoiY21ncTFxdGl3Mmk4eTJqcHFzMTgyOHQwcSJ9.L3AEiq_aLblbdUQ_N09hrA'
 
-// Reactive data
 const searchQuery = ref('')
 const searchResults = ref([])
 const routingMode = ref(false)
@@ -133,10 +124,8 @@ let map = null
 let markers = []
 let routeLayer = null
 
-// Wellington Road, Clayton, VIC 3800 coordinates
-const OFFICE_COORDINATES = [145.1365, -37.9142] // [longitude, latitude] for Clayton, VIC
+const OFFICE_COORDINATES = [145.1365, -37.9142]
 
-// Initialize map when component mounts
 onMounted(() => {
   if (!MAPBOX_TOKEN || MAPBOX_TOKEN !== 'pk.eyJ1IjoiamF5eGNhdHMiLCJhIjoiY21ncTFxdGl3Mmk4eTJqcHFzMTgyOHQwcSJ9.L3AEiq_aLblbdUQ_N09hrA') {
     error.value = 'Please configure your Mapbox token first'
@@ -153,12 +142,9 @@ onMounted(() => {
       zoom: 14
     })
 
-    // Wait for map to load
     map.on('load', () => {
-      // Add navigation controls
       map.addControl(new mapboxgl.NavigationControl())
 
-      // Add geolocate control
       map.addControl(new mapboxgl.GeolocateControl({
         positionOptions: {
           enableHighAccuracy: true
@@ -167,11 +153,9 @@ onMounted(() => {
         showUserLocation: true
       }))
 
-      // Add office location marker
       addOfficeMarker()
     })
 
-    // Handle map clicks for routing
     map.on('click', (e) => {
       if (routingMode.value && markers.length < 3) {
         addRoutePoint(e.lngLat)
@@ -184,7 +168,6 @@ onMounted(() => {
   }
 })
 
-// Add office marker
 const addOfficeMarker = () => {
   if (!map) return
 
@@ -201,7 +184,6 @@ const addOfficeMarker = () => {
   markers.push(officeMarker)
 }
 
-// Search for places using Mapbox Geocoding API
 const searchPlaces = async () => {
   if (!searchQuery.value.trim()) return
 
@@ -232,14 +214,12 @@ const searchPlaces = async () => {
   }
 }
 
-// Focus map on search result
 const focusOnResult = (result) => {
   if (!map) return
 
   const [lng, lat] = result.center
   map.flyTo({ center: [lng, lat], zoom: 14 })
 
-  // Add marker for the search result
   const marker = new mapboxgl.Marker({ color: 'blue' })
     .setLngLat([lng, lat])
     .setPopup(new mapboxgl.Popup().setHTML(`
@@ -253,7 +233,6 @@ const focusOnResult = (result) => {
   searchQuery.value = ''
 }
 
-// Toggle routing mode
 const toggleRouting = () => {
   routingMode.value = !routingMode.value
   if (!routingMode.value) {
@@ -261,7 +240,6 @@ const toggleRouting = () => {
   }
 }
 
-// Add route point and calculate route if two points are selected
 const addRoutePoint = async (lngLat) => {
   if (!map) return
 
@@ -271,12 +249,11 @@ const addRoutePoint = async (lngLat) => {
 
   markers.push(marker)
 
-  if (markers.length === 3) { // Office + 2 route points
+  if (markers.length === 3) {
     await calculateRoute()
   }
 }
 
-// Calculate route between points
 const calculateRoute = async () => {
   if (markers.length < 3 || !map) return
 
@@ -315,11 +292,9 @@ const calculateRoute = async () => {
   }
 }
 
-// Draw route on map
 const drawRoute = (geometry) => {
   if (!map) return
 
-  // Remove existing route layer
   if (routeLayer) {
     if (map.getLayer('route')) map.removeLayer('route')
     if (map.getSource('route')) map.removeSource('route')
@@ -352,7 +327,6 @@ const drawRoute = (geometry) => {
   routeLayer = true
 }
 
-// Get user's current location
 const getUserLocation = () => {
   if (!navigator.geolocation) {
     error.value = 'Geolocation is not supported by your browser'
@@ -393,15 +367,12 @@ const getUserLocation = () => {
   )
 }
 
-// Clear current route
 const clearRoute = () => {
   if (!map) return
 
-  // Remove route markers (keep office marker)
   markers.slice(1).forEach(marker => marker.remove())
   markers = markers.slice(0, 1)
 
-  // Remove route layer
   if (routeLayer) {
     if (map.getLayer('route')) map.removeLayer('route')
     if (map.getSource('route')) map.removeSource('route')

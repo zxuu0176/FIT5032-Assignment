@@ -3,14 +3,12 @@
     <h1>Welcome to the Admin Page</h1>
     <p>Welcome, {{userEmail}}.</p>
 
-    <!-- Bulk Email Tool -->
     <div class="table-container">
       <div class="table-header">
         <h2>Bulk Email Tool</h2>
       </div>
 
       <div class="p-4">
-        <!-- Email Composition -->
         <div class="mb-4">
           <label class="form-label fw-bold">Email Subject:</label>
           <input
@@ -34,7 +32,6 @@
           <small class="text-muted">You can use HTML formatting in your message.</small>
         </div>
 
-        <!-- Recipient Selection -->
         <div class="mb-4">
           <label class="form-label fw-bold">Select Recipients:</label>
           <div class="mb-2">
@@ -58,7 +55,6 @@
           </div>
         </div>
 
-        <!-- Send Button -->
         <div class="mb-4">
           <button
             @click="sendBulkEmail"
@@ -70,7 +66,6 @@
           </button>
         </div>
 
-        <!-- Results Display -->
         <div v-if="emailResults" class="mt-4 p-3 rounded" :class="emailResults.success ? 'bg-success bg-opacity-10' : 'bg-danger bg-opacity-10'">
           <h5>Email Results:</h5>
           <p><strong>Successfully sent:</strong> {{ emailResults.summary.totalSent }} emails</p>
@@ -89,7 +84,6 @@
       </div>
     </div>
 
-    <!-- Users Table -->
     <div class="table-container mt-4">
       <div class="table-header">
         <h2>Users Management</h2>
@@ -100,7 +94,6 @@
         </div>
       </div>
 
-      <!-- Individual Column Search Inputs -->
       <div class="column-search-container">
         <div class="search-inputs">
           <input
@@ -188,12 +181,10 @@
         </tbody>
       </table>
 
-      <!-- Show message when no data -->
       <div v-if="filteredUsers.length === 0" class="no-data-message">
         No users found matching your search criteria.
       </div>
 
-      <!-- Pagination Controls -->
       <div v-if="filteredUsers.length > 0" class="pagination-controls">
         <div class="pagination-info">
           Showing {{ startIndex + 1 }} to {{ endIndex }} of {{ filteredUsers.length }} entries
@@ -224,7 +215,6 @@
       </div>
     </div>
 
-    <!-- Statistics Table -->
     <div class="table-container mt-4">
       <div class="table-header">
         <h2>User Statistics</h2>
@@ -263,10 +253,9 @@ let unsubscribe = null;
 const roleAuth = useAuth();
 const role = ref(null);
 
-// Bulk Email State
 const emailSubject = ref('');
 const emailMessage = ref('');
-const selectedUsers = ref([]); // Array of user IDs
+const selectedUsers = ref([]);
 const emailResults = ref(null);
 const isSending = ref(false);
 
@@ -286,14 +275,12 @@ onUnmounted(() => {
   if (typeof unsubscribe === 'function') unsubscribe()
 });
 
-// Reactive data
 const users = ref([]);
 const currentPage = ref(1);
 const pageSize = ref(10);
 const sortField = ref('id');
 const sortDirection = ref('asc');
 
-// Column search states with better placeholders
 const searchColumns = ref([
   {
     title: 'ID',
@@ -332,7 +319,6 @@ const searchColumns = ref([
   }
 ]);
 
-// Computed properties for bulk email
 const canSendEmail = computed(() => {
   return emailSubject.value &&
          emailMessage.value &&
@@ -345,7 +331,6 @@ const allUsersSelected = computed(() => {
          paginatedUsers.value.every(user => selectedUsers.value.includes(user.id));
 });
 
-// User selection methods
 const selectAllUsers = () => {
   selectedUsers.value = users.value.map(user => user.id);
 };
@@ -360,7 +345,6 @@ const clearSelection = () => {
 
 const toggleSelectAll = () => {
   if (allUsersSelected.value) {
-    // Deselect all users on current page
     paginatedUsers.value.forEach(user => {
       const index = selectedUsers.value.indexOf(user.id);
       if (index > -1) {
@@ -368,7 +352,6 @@ const toggleSelectAll = () => {
       }
     });
   } else {
-    // Select all users on current page
     paginatedUsers.value.forEach(user => {
       if (!selectedUsers.value.includes(user.id)) {
         selectedUsers.value.push(user.id);
@@ -390,17 +373,14 @@ const isUserSelected = (userId) => {
   return selectedUsers.value.includes(userId);
 };
 
-// Get selected user emails
 const getSelectedUserEmails = () => {
   return users.value
     .filter(user => selectedUsers.value.includes(user.id))
     .map(user => user.email);
 };
 
-// Bulk email function
 const BULK_EMAIL_FUNCTION_URL = 'https://us-central1-basic-web-application-a7857.cloudfunctions.net/sendBulkEmail';
 
-// Update the sendBulkEmail function:
 const sendBulkEmail = async () => {
   if (!canSendEmail.value) return;
 
@@ -410,7 +390,6 @@ const sendBulkEmail = async () => {
   try {
     const selectedEmails = getSelectedUserEmails();
 
-    // Get the current user's ID token
     const auth = getAuth();
     const user = auth.currentUser;
     if (!user) {
@@ -418,8 +397,6 @@ const sendBulkEmail = async () => {
     }
 
     const token = await user.getIdToken();
-
-    console.log('Sending bulk email to:', selectedEmails.length, 'users');
 
     const response = await fetch(BULK_EMAIL_FUNCTION_URL, {
       method: 'POST',
@@ -443,17 +420,13 @@ const sendBulkEmail = async () => {
     const result = await response.json();
     emailResults.value = result;
 
-    console.log('Bulk email results:', result);
-
   } catch (error) {
     console.error('Bulk email failed:', error);
-    // Your existing error handling...
   } finally {
     isSending.value = false;
   }
 };
 
-// Load user data from mock_user.json
 const loadUserData = async () => {
   try {
     const response = await import('../data/mock_user.json');
@@ -467,29 +440,19 @@ const loadUserData = async () => {
   }
 };
 
-// ... (rest of your existing computed properties and methods remain the same)
-// filteredUsers, paginatedUsers, totalPages, startIndex, endIndex, applyColumnSearch,
-// sortTable, nextPage, previousPage, resetPagination, userStats, exportToPDF,
-// viewUser, editUser - all remain unchanged
-
-// Computed property for filtered users based on column searches
 const filteredUsers = computed(() => {
   let filtered = [...users.value];
 
-  // Apply column-specific searches
   searchColumns.value.forEach(col => {
     if (col.search.trim()) {
       filtered = filtered.filter(user => {
         const userValue = user[col.field];
 
-        // Handle different field types
         if (col.type === 'number') {
-          // For ID field, use exact match or starts with for numbers
           const searchNum = parseInt(col.search);
           if (isNaN(searchNum)) return false;
           return userValue === searchNum;
         } else {
-          // For text fields, use case-insensitive contains
           const value = String(userValue).toLowerCase();
           return value.includes(col.search.toLowerCase());
         }
@@ -497,7 +460,6 @@ const filteredUsers = computed(() => {
     }
   });
 
-  // Apply sorting
   filtered.sort((a, b) => {
     let aValue = a[sortField.value];
     let bValue = b[sortField.value];
@@ -515,19 +477,16 @@ const filteredUsers = computed(() => {
   return filtered;
 });
 
-// Computed property for paginated users
 const paginatedUsers = computed(() => {
   const startIndex = (currentPage.value - 1) * pageSize.value;
   const endIndex = startIndex + pageSize.value;
   return filteredUsers.value.slice(startIndex, endIndex);
 });
 
-// Total pages computed
 const totalPages = computed(() => {
   return Math.ceil(filteredUsers.value.length / pageSize.value);
 });
 
-// Pagination indices
 const startIndex = computed(() => {
   return (currentPage.value - 1) * pageSize.value;
 });
@@ -537,12 +496,10 @@ const endIndex = computed(() => {
   return end > filteredUsers.value.length ? filteredUsers.value.length : end;
 });
 
-// Apply column search
 const applyColumnSearch = () => {
-  currentPage.value = 1; // Reset to first page when searching
+  currentPage.value = 1;
 };
 
-// Sort table
 const sortTable = (field) => {
   if (sortField.value === field) {
     sortDirection.value = sortDirection.value === 'asc' ? 'desc' : 'asc';
@@ -553,7 +510,6 @@ const sortTable = (field) => {
   currentPage.value = 1;
 };
 
-// Pagination methods
 const nextPage = () => {
   if (currentPage.value < totalPages.value) {
     currentPage.value++;
@@ -570,7 +526,6 @@ const resetPagination = () => {
   currentPage.value = 1;
 };
 
-// Statistics table data (second table)
 const userStats = computed(() => {
   const stats = [];
   if (users.value.length > 0) {
@@ -598,16 +553,12 @@ const userStats = computed(() => {
   return stats;
 });
 
-// Export to PDF function with fallback
 const exportToPDF = async () => {
   try {
-    // Dynamically import jsPDF and autoTable to avoid bundle issues
     const { jsPDF } = await import('jspdf');
 
-    // Check if autoTable is available, if not use manual table creation
     let autoTableAvailable = false;
     try {
-      // Try to import autoTable
       await import('jspdf-autotable');
       autoTableAvailable = true;
     } catch {
@@ -616,15 +567,12 @@ const exportToPDF = async () => {
 
     const doc = new jsPDF();
 
-    // Add title
     doc.setFontSize(16);
     doc.text('Users Management Report', 14, 15);
 
-    // Add date
     doc.setFontSize(10);
     doc.text(`Generated on: ${new Date().toLocaleDateString()}`, 14, 22);
 
-    // Prepare table data
     const tableData = filteredUsers.value.map(user => [
       user.id,
       user.first_name,
@@ -633,7 +581,6 @@ const exportToPDF = async () => {
     ]);
 
     if (autoTableAvailable && typeof doc.autoTable === 'function') {
-      // Use autoTable if available
       doc.autoTable({
         startY: 30,
         head: [['ID', 'First Name', 'Last Name', 'Email']],
@@ -643,7 +590,6 @@ const exportToPDF = async () => {
         margin: { top: 30 }
       });
 
-      // Add statistics table
       const statsData = userStats.value.map(stat => [
         stat.metric,
         stat.value
@@ -658,12 +604,10 @@ const exportToPDF = async () => {
         margin: { top: 20 }
       });
     } else {
-      // Manual table creation fallback
       let yPosition = 30;
       const lineHeight = 7;
       const colWidths = [15, 40, 40, 80];
 
-      // Draw table headers
       doc.setFillColor(66, 139, 202);
       doc.setTextColor(255, 255, 255);
       doc.rect(14, yPosition, colWidths[0], lineHeight, 'F');
@@ -678,9 +622,8 @@ const exportToPDF = async () => {
       yPosition += lineHeight;
       doc.setTextColor(0, 0, 0);
 
-      // Draw table rows
       tableData.forEach(row => {
-        if (yPosition > 270) { // Add new page if needed
+        if (yPosition > 270) {
           doc.addPage();
           yPosition = 20;
         }
@@ -693,7 +636,6 @@ const exportToPDF = async () => {
         yPosition += lineHeight;
       });
 
-      // Add statistics section
       yPosition += 10;
       doc.setFillColor(40, 167, 69);
       doc.setTextColor(255, 255, 255);
@@ -714,7 +656,6 @@ const exportToPDF = async () => {
       });
     }
 
-    // Save the PDF
     doc.save(`users-report-${new Date().toISOString().split('T')[0]}.pdf`);
   } catch (error) {
     console.error('Error generating PDF:', error);
@@ -722,7 +663,6 @@ const exportToPDF = async () => {
   }
 };
 
-// Action functions
 const viewUser = (userId) => {
   const user = users.value.find(u => u.id === userId);
   if (user) {
@@ -739,7 +679,6 @@ const editUser = (userId) => {
 </script>
 
 <style scoped>
-/* Add these new styles for bulk email functionality */
 .selected-users-info {
   margin-top: 10px;
 }
@@ -752,7 +691,6 @@ const editUser = (userId) => {
   background-color: #e3f2fd !important;
 }
 
-/* Ensure the existing styles are preserved */
 .admin-page {
   padding: 20px;
   max-width: 1400px;
@@ -775,6 +713,4 @@ const editUser = (userId) => {
   border-bottom: 1px solid #e0e0e0;
   background: #f8f9fa;
 }
-
-/* ... (rest of your existing styles) ... */
 </style>

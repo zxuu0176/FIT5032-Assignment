@@ -140,17 +140,14 @@
 <script setup>
 import { ref } from 'vue';
 
-// Gemini API configuration
 const GEMINI_API_KEY = 'AIzaSyCeuH3OjlSUjA9N0YyHPU4yLA7LVHqCLeg';
 const GEMINI_API_URL = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent';
 
-// Reactive data
 const userQuestion = ref('');
 const aiResponse = ref('');
 const loading = ref(false);
 const error = ref('');
 
-// Quick questions for users
 const quickQuestions = ref([
   "Beginner program?",
   "Program costs?",
@@ -159,7 +156,6 @@ const quickQuestions = ref([
   "No experience needed?"
 ]);
 
-// Context for the AI to understand our programs
 const systemContext = `
 You are a helpful assistant for a basketball program designed for international students.
 Our programs include:
@@ -176,7 +172,6 @@ Provide friendly, helpful responses and encourage students to join our programs.
 If you don't know something, suggest they contact us for more details.
 `;
 
-// Ask Gemini AI
 const askGemini = async () => {
   if (!userQuestion.value.trim()) return;
 
@@ -229,19 +224,16 @@ const askGemini = async () => {
   }
 };
 
-// Set quick question
 const setQuickQuestion = (question) => {
   userQuestion.value = question;
 };
 
-// Clear chat
 const clearChat = () => {
   userQuestion.value = '';
   aiResponse.value = '';
   error.value = '';
 };
 
-// Format response with basic formatting
 const formatResponse = (text) => {
   return text
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')

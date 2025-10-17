@@ -10,7 +10,6 @@
         </div>
       </div>
 
-      <!-- Statistics Overview -->
       <div class="row mb-4">
         <div class="col-md-3">
           <div class="card text-center">
@@ -46,9 +45,7 @@
         </div>
       </div>
 
-      <!-- Interactive Charts -->
       <div class="row">
-        <!-- Program Enrollment Chart -->
         <div class="col-md-6 mb-4">
           <div class="card">
             <div class="card-header">
@@ -60,7 +57,6 @@
           </div>
         </div>
 
-        <!-- Student Experience Levels -->
         <div class="col-md-6 mb-4">
           <div class="card">
             <div class="card-header">
@@ -72,7 +68,6 @@
           </div>
         </div>
 
-        <!-- Monthly Registrations -->
         <div class="col-md-6 mb-4">
           <div class="card">
             <div class="card-header">
@@ -84,7 +79,6 @@
           </div>
         </div>
 
-        <!-- Country Distribution -->
         <div class="col-md-6 mb-4">
           <div class="card">
             <div class="card-header">
@@ -97,7 +91,6 @@
         </div>
       </div>
 
-      <!-- Quick Actions -->
       <div class="row mt-4">
         <div class="col-12">
           <div class="card">
@@ -126,25 +119,21 @@ import { initdb } from '../firebase/init';
 import { collection, getDocs } from "firebase/firestore";
 import * as echarts from 'echarts';
 
-// Reactive data
 const totalRegistrations = ref(0);
 const totalBookings = ref(0);
 const averageRating = ref(0);
 const programs = ref([]);
 
-// Chart refs
 const enrollmentChart = ref(null);
 const experienceChart = ref(null);
 const monthlyChart = ref(null);
 const countryChart = ref(null);
 
-// Chart instances
 let enrollmentChartInstance = null;
 let experienceChartInstance = null;
 let monthlyChartInstance = null;
 let countryChartInstance = null;
 
-// Sample programs data (you can replace with actual data from Firestore)
 programs.value = [
   { title: "Beginner International League", enrollments: 45 },
   { title: "Intermediate Skills Program", enrollments: 32 },
@@ -152,20 +141,16 @@ programs.value = [
   { title: "Cultural Exchange Program", enrollments: 38 }
 ];
 
-// Fetch data from Firestore
 const fetchData = async () => {
   const db = initdb();
 
   try {
-    // Fetch registrations
     const registrationsSnapshot = await getDocs(collection(db, "registrations"));
     totalRegistrations.value = registrationsSnapshot.size;
 
-    // Fetch bookings
     const bookingsSnapshot = await getDocs(collection(db, "bookings"));
     totalBookings.value = bookingsSnapshot.size;
 
-    // Fetch ratings and calculate average
     const ratingsSnapshot = await getDocs(collection(db, "ratings"));
     if (ratingsSnapshot.size > 0) {
       const totalRating = ratingsSnapshot.docs.reduce((sum, doc) => {
@@ -174,19 +159,15 @@ const fetchData = async () => {
       averageRating.value = (totalRating / ratingsSnapshot.size).toFixed(1);
     }
 
-    // Initialize charts after data is fetched
     setTimeout(initializeCharts, 100);
 
   } catch (error) {
     console.error('Error fetching data:', error);
-    // Initialize charts with sample data even if there's an error
     setTimeout(initializeCharts, 100);
   }
 };
 
-// Initialize charts
 const initializeCharts = () => {
-  // Program Enrollment Chart
   if (enrollmentChart.value) {
     enrollmentChartInstance = echarts.init(enrollmentChart.value);
     enrollmentChartInstance.setOption({
@@ -219,7 +200,6 @@ const initializeCharts = () => {
     });
   }
 
-  // Experience Levels Chart
   if (experienceChart.value) {
     experienceChartInstance = echarts.init(experienceChart.value);
     experienceChartInstance.setOption({
@@ -248,7 +228,6 @@ const initializeCharts = () => {
     });
   }
 
-  // Monthly Registrations Chart
   if (monthlyChart.value) {
     monthlyChartInstance = echarts.init(monthlyChart.value);
     monthlyChartInstance.setOption({
@@ -291,7 +270,6 @@ const initializeCharts = () => {
     });
   }
 
-  // Country Distribution Chart
   if (countryChart.value) {
     countryChartInstance = echarts.init(countryChart.value);
     countryChartInstance.setOption({
@@ -337,7 +315,6 @@ const initializeCharts = () => {
   }
 };
 
-// Handle window resize
 const handleResize = () => {
   enrollmentChartInstance?.resize();
   experienceChartInstance?.resize();
@@ -350,7 +327,6 @@ onMounted(() => {
   window.addEventListener('resize', handleResize);
 });
 
-// Cleanup
 import { onUnmounted } from 'vue';
 onUnmounted(() => {
   window.removeEventListener('resize', handleResize);
